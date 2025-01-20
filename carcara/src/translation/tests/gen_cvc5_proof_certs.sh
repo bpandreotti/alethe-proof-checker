@@ -2,7 +2,7 @@
 
 # Generates Alethe proof certificates, using $COMMAND, from input problems
 # contained in $DIR.
-DIR="./problems/"
+DIR="./cvc5_problems/"
 COMMAND="cvc5 --dump-proofs --proof-format-mode=alethe --proof-elim-subtypes"
 CARCARA_COMMAND="../../../../target/release/carcara check --expand-let-bindings --allow-int-real-subtyping --ignore-unknown-rules"
 
@@ -16,7 +16,7 @@ for FILE in "$DIR"/*; do
         # Check if the file has the .smt2 extension
         if [ "$EXTENSION" == "smt2" ]; then
             # Proof certificate's name
-            PROOF_CERTIFICATE="${FILE}_proof_certificate"
+            PROOF_CERTIFICATE="${FILE}_cvc5_proof_certificate"
 
             # Execute the command and redirect the output to the new file
             ${COMMAND} "$FILE" > "$PROOF_CERTIFICATE"

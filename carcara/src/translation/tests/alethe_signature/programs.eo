@@ -35,30 +35,60 @@
     )
 )
 
-
-;TODO
-; program: contains
+; program: cl_contains_prop
 ; args:
-; - inList Bool:
-; - phi Bool:
-; return:
-(program contains ((inList Bool) (phi Bool))
+; - phi Bool: A proposition.
+; - clause Bool: A clause, built with @cl.
+; return: A boolean indicating if "phi" is a disjunct from "clause".
+(program cl_contains_prop ((phi Bool) (hd Bool) (tl Bool :list))
   (Bool Bool) Bool
   (
-   ((contains inList phi) true)
+   ((cl_contains_prop phi (@cl phi tl)) true)
+
+   ;; { head of list is not phi}
+   ((cl_contains_prop phi (@cl hd tl)) (cl_contains_prop phi tl))
+
+   ((cl_contains_prop phi phi) true)
+
+   ;; { hd != phi}
+   ((cl_contains_prop phi hd) false)
   )
 )
 
-;TODO true if CL2 is a permuation of CL1
-; program: clEqual
+; program: cl_contains_cl
 ; args:
-; - CL1 Bool:
-; - CL2 Bool:
-; return:
-(program clEqual ((CL1 Bool) (CL2 Bool))
+; - cl_1 Bool: A clause, built with @cl.
+; - cl_2 Bool: A clause, built with @cl.
+; return: >
+;   A boolean indicating if cl_1's disjuncts are also present
+;   in cl_2
+(program cl_contains_cl ((hd Bool) (tl Bool :list) (cl_2 Bool))
   (Bool Bool) Bool
   (
-   ((clEqual CL1 CL2) true)
+   ((cl_contains_cl (@cl hd tl) cl_2)
+    ;; TODO: I need some way to build boolean values
+    ;; combining other boolean values, but I would like
+    ;; to avoid built-in operators.
+    (eo::and (cl_contains_prop hd cl_2)
+             (cl_contains_cl tl cl_2)))
+
+ 
+   ;; { cl_1 is not a clause built with @cl }
+   ((cl_contains_cl hd cl_2)
+    (cl_contains_prop hd cl_2))
+  )
+)
+
+; program: cl_equal
+; args:
+; - list_1 Bool:
+; - list_2 Bool:
+; return:
+(program cl_equal ((list_1 Bool) (list_2 Bool))
+  (Bool Bool) Bool
+  (
+   ((cl_equal list_1 list_2) (eo::and (cl_contains_cl list_1 list_2)
+                                      (cl_contains_cl list_2 list_1)))
   )
 )
 

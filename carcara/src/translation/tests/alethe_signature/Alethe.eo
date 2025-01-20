@@ -441,7 +441,7 @@
 (program check_and ((premise Bool) (premise_non_cl Bool) (index Int) (conclusion Bool))
   (Bool Int Bool) Bool
   (((check_and premise index conclusion)
-    (eo::is_eq (to_cl (index_list and (from_cl premise) index))
+    (cl_equal (to_cl (index_list and (from_cl premise) index))
                conclusion))
   )
 )
@@ -484,7 +484,7 @@
     (check_not_or premise_non_cl index conclusion))
 
    ((check_not_or (not disjuncts) index conclusion)
-    (eo::is_eq (to_cl (not (index_list or disjuncts index)))
+    (cl_equal (to_cl (not (index_list or disjuncts index)))
                conclusion))
    )
 )
@@ -540,7 +540,7 @@
   (Bool Bool) Bool
   (
    ((check_or premise conclusion) 
-    (eo::is_eq (convert_or_to_cl (from_cl premise)) conclusion))
+    (cl_equal (convert_or_to_cl (from_cl premise)) conclusion))
   )
 )
 
@@ -570,27 +570,42 @@
   (Bool) Bool
   (
    ((transform_not_and (and l ls))
-    (@cl (not l) (from_cl (transform_not_and ls))))
+    (@cl (not l) (from_cl (transform_not_and ls)))
+    )
 
    ((transform_not_and l) (@cl (not l)))
   )
 )
 
-;TODO implement transform_not_and
-;; (program check_not_and ((C Bool) (CN Bool :list) (refCL Bool))
+; program: check_not_and
+; args:
+; - premise Bool: Premise of the not_and rule: a negated conjunction of propositions.
+; - conclusion Bool: >
+;   The conclusion provided to the not_and rule. Should be a clause built with
+;   @cl, where each disjunct is negated and corresponds to some conjunct from
+;   "premise".
+; return: >
+;   A boolean indicating if "conclusion" satisfies the previous property.
 (program check_not_and ((conjunction Bool) (conclusion Bool))
   (Bool Bool) Bool
   (((check_not_and (not conjunction) conclusion)
-    ;; TODO: use clEqual!
-     (transform_not_and conjunction)
-     ;; (eo::is_eq (transform_not_and conjunction) conclusion)
+     (cl_equal (transform_not_and conjunction) conclusion)
      )
   )
 )
 
+; rule: not_and
+; premises:
+; - premise Bool: >
+;  The premise clause: a negated conjunction of propositions.
+; requires: >
+;  For "conclusion" to be a clause built with @cl, that results from applying
+;  DeMorgan's rule over "premise".
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule not_and ((premise Bool))
   :premises (premise)
-  :requires (((check_not_and (from_cl premise) eo::conclusion) eo::conclusion))
+  :requires (((check_not_and (from_cl premise) eo::conclusion) true))
   :conclusion-given
 )
 
@@ -598,10 +613,10 @@
   (Bool Bool) Bool
   (
    ((check_xor1 (@cl (xor phi1 phi2)) refCL)
-     (clEqual (@cl phi1 phi2) refCL)
+     (cl_equal (@cl phi1 phi2) refCL)
    )
    ((check_xor1 (xor phi1 phi2) refCL)
-     (clEqual (@cl phi1 phi2) refCL)
+     (cl_equal (@cl phi1 phi2) refCL)
    )
   )
 )
@@ -616,10 +631,10 @@
   (Bool Bool) Bool
   (
    ((check_xor2 (@cl (xor phi1 phi2)) refCL)
-     (clEqual (@cl (not phi1) (not phi2)) refCL)
+     (cl_equal (@cl (not phi1) (not phi2)) refCL)
    )
    ((check_xor2 (xor phi1 phi2) refCL)
-     (clEqual (@cl (not phi1) (not phi2)) refCL)
+     (cl_equal (@cl (not phi1) (not phi2)) refCL)
    )
   )
 )
@@ -635,10 +650,10 @@
   (Bool Bool) Bool
   (
    ((check_not_xor1 (@cl (xor phi1 phi2)) refCL)
-     (clEqual (@cl phi1 (not phi2)) refCL)
+     (cl_equal (@cl phi1 (not phi2)) refCL)
    )
    ((check_not_xor1 (xor phi1 phi2) refCL)
-     (clEqual (@cl phi1 (not phi2)) refCL)
+     (cl_equal (@cl phi1 (not phi2)) refCL)
    )
   )
 )
@@ -655,10 +670,10 @@
   (Bool Bool) Bool
   (
    ((check_not_xor2 (@cl (xor phi1 phi2)) refCL)
-     (clEqual (@cl (not phi1) phi2) refCL)
+     (cl_equal (@cl (not phi1) phi2) refCL)
    )
    ((check_not_xor2 (xor phi1 phi2) refCL)
-     (clEqual (@cl (not phi1) phi2) refCL)
+     (cl_equal (@cl (not phi1) phi2) refCL)
    )
   )
 )
@@ -670,22 +685,38 @@
   :conclusion refCL
 )
 
+;;;;;;;;;;;;;;;;;;
+; Rule 41: implies
+;;;;;;;;;;;;;;;;;;
+
+; program: check_implies
+; args:
+; - phi1 Bool:
+; - phi2 Bool:
+; - refCL Bool:
+; return:
 (program check_implies ((phi1 Bool) (phi2 Bool) (refCL Bool))
   (Bool Bool) Bool
   (
    ((check_implies (@cl (=> phi1 phi2)) refCL)
-     (clEqual (@cl (not phi1) phi2) refCL)
+     (cl_equal (@cl (not phi1) phi2) refCL)
    )
    ;; TODO: why do we have this case?
    ((check_implies (=> phi1 phi2) refCL)
-     (clEqual (@cl (not phi1) phi2) refCL)
+     (cl_equal (@cl (not phi1) phi2) refCL)
    )
   )
 )
 
-(declare-rule implies ((CL Bool))
-  :premises (CL)
-  :requires (((check_implies CL eo::conclusion) true))
+; rule: implies
+; implements: TODO?
+; premises:
+; - premise Bool:
+; requires:
+; conclusion:
+(declare-rule implies ((premise Bool))
+  :premises (premise)
+  :requires (((check_implies premise eo::conclusion) true))
   :conclusion-given
 )
 
@@ -693,10 +724,10 @@
   (Bool Bool) Bool
   (
    ((check_not_implies1 (@cl (not (=> phi1 phi2))) refCL)
-     (clEqual (@cl phi1) refCL)
+     (cl_equal (@cl phi1) refCL)
    )
    ((check_not_implies1 (not (=> phi1 phi2)) refCL)
-     (clEqual (@cl phi1) refCL)
+     (cl_equal (@cl phi1) refCL)
    )
   )
 )
@@ -712,10 +743,10 @@
   (Bool Bool) Bool
   (
    ((check_not_implies2 (@cl (not (=> phi1 phi2))) refCL)
-     (clEqual (@cl phi1) refCL)
+     (cl_equal (@cl phi1) refCL)
    )
    ((check_not_implies2 (not (=> phi1 phi2)) refCL)
-     (clEqual (@cl phi1) refCL)
+     (cl_equal (@cl phi1) refCL)
    )
   )
 )
@@ -731,10 +762,10 @@
   (Bool Bool) Bool
   (
    ((check_equiv1 (@cl (= phi1 phi2)) refCL)
-     (clEqual (@cl (not phi1) phi2) refCL)
+     (cl_equal (@cl (not phi1) phi2) refCL)
    )
    ((check_equiv1 (= phi1 phi2) refCL)
-     (clEqual (@cl (not phi1) phi2) refCL)
+     (cl_equal (@cl (not phi1) phi2) refCL)
    )
   )
 )
@@ -749,10 +780,10 @@
   (Bool Bool) Bool
   (
    ((check_equiv2 (@cl (= phi1 phi2)) refCL)
-     (clEqual (@cl phi1 (not phi2)) refCL)
+     (cl_equal (@cl phi1 (not phi2)) refCL)
    )
    ((check_equiv2 (= phi1 phi2) refCL)
-     (clEqual (@cl phi1 (not phi2)) refCL)
+     (cl_equal (@cl phi1 (not phi2)) refCL)
    )
   )
 )
@@ -768,10 +799,10 @@
   (Bool Bool) Bool
   (
    ((check_not_equiv1 (@cl (not (= phi1 phi2))) refCL)
-     (clEqual (@cl phi1 phi2) refCL)
+     (cl_equal (@cl phi1 phi2) refCL)
    )
    ((check_not_equiv1 (not (= phi1 phi2)) refCL)
-     (clEqual (@cl phi1 phi2) refCL)
+     (cl_equal (@cl phi1 phi2) refCL)
    )
   )
 )
@@ -1006,10 +1037,10 @@
   (Bool Bool) Bool
   (
    ((check_ite1 (@cl (ite phi1 phi2 phi3)) refCL)
-     (clEqual (@cl phi1 phi3) refCL)
+     (cl_equal (@cl phi1 phi3) refCL)
    )
    ((check_ite1 (ite phi1 phi2 phi3) refCL)
-     (clEqual (@cl phi1 phi3) refCL)
+     (cl_equal (@cl phi1 phi3) refCL)
    )
   )
 )
@@ -1025,10 +1056,10 @@
   (Bool Bool) Bool
   (
    ((check_ite2 (@cl (ite phi1 phi2 phi3)) refCL)
-     (clEqual (@cl (not phi1) phi2) refCL)
+     (cl_equal (@cl (not phi1) phi2) refCL)
    )
    ((check_ite2 (ite phi1 phi2 phi3) refCL)
-     (clEqual (@cl (not phi1) phi2) refCL)
+     (cl_equal (@cl (not phi1) phi2) refCL)
    )
   )
 )
@@ -1103,10 +1134,10 @@
   (Bool Bool) Bool
   (
    ((check_not_ite1 (@cl (not (ite phi1 phi2 phi3))) refCL)
-     (clEqual (@cl phi1 (not phi3)) refCL)
+     (cl_equal (@cl phi1 (not phi3)) refCL)
    )
    ((check_not_ite1 (not (ite phi1 phi2 phi3)) refCL)
-     (clEqual (@cl phi1 (not phi3)) refCL)
+     (cl_equal (@cl phi1 (not phi3)) refCL)
    )
   )
 )
@@ -1122,10 +1153,10 @@
   (Bool Bool) Bool
   (
    ((check_not_ite2 (@cl (not (ite phi1 phi2 phi3))) refCL)
-     (clEqual (@cl (not phi1) (not phi2)) refCL)
+     (cl_equal (@cl (not phi1) (not phi2)) refCL)
    )
    ((check_not_ite2 (not (ite phi1 phi2 phi3)) refCL)
-     (clEqual (@cl (not phi1) (not phi2)) refCL)
+     (cl_equal (@cl (not phi1) (not phi2)) refCL)
    )
   )
 )
