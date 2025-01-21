@@ -434,10 +434,10 @@
 ;   (built with @cl).
 ; - index Int          : Conjunct index, as provided to the rule.
 ; - conclusion Bool    : >
-;   Conclusion provided to the rule. Should be a conjunct from 
-;   "premise", with index "index", for the conclusion to check. 
+;   Conclusion provided to the rule. 
 ; return: >
-;   A boolean indicating if "conclusion" satisfies the previous property.
+;   A boolean indicating if "conclusion" is a conjunct from 
+;   "premise", with index "index", for the conclusion to check.
 (program check_and ((premise Bool) (premise_non_cl Bool) (index Int) (conclusion Bool))
   (Bool Int Bool) Bool
   (((check_and premise index conclusion)
@@ -476,10 +476,10 @@
 ;   (built with @cl).
 ; - index Int          : Conjunct index, as provided to the rule.
 ; - conclusion Bool    : >
-;   Conclusion provided to the rule. Should be a conjunct from 
-;   "premise", with index "index", for the conclusion to check. 
+;   Conclusion provided to the rule. 
 ; return: >
-;   A boolean indicating if "conclusion" satisfies the previous property.
+;   A boolean indicating if "conclusion" is a conjunct from "premise" (after
+;   applying DeMorgan's law), in position "index".
 (program check_not_or ((disjuncts Bool) (premise_non_cl Bool) (index Int) (conclusion Bool))
   (Bool Int Bool) Bool
   (;; To facilitate the use of the program, we allow 
@@ -542,10 +542,10 @@
 ;   Premise of the "or" rule: a disjunction of terms, built with "or" operator. 
 ;   It could be embedded within a single-term clause built with @cl.
 ; - conclusion Bool: >
-;   Conclusion provided to the rule. Should be exactly as "premise", but built 
-;   with @cl.
+;   Conclusion provided to the rule. 
 ; return: >
-;   A boolean indicating if "conclusion" satisfies the previous property.
+;   A boolean indicating if "conclusion" is equivalent to "premise", but built 
+;   with @cl.
 (program check_or ((premise Bool) (conclusion Bool))
   (Bool Bool) Bool
   (
@@ -595,11 +595,11 @@
 ; args:
 ; - premise Bool: Premise of the not_and rule: a negated conjunction of propositions.
 ; - conclusion Bool: >
-;   The conclusion provided to the not_and rule. Should be a clause built with
+;   The conclusion provided to the not_and rule.
+; return: >
+;   A boolean indicating if "conclusion" is a clause built with
 ;   @cl, where each disjunct is negated and corresponds to some conjunct from
 ;   "premise".
-; return: >
-;   A boolean indicating if "conclusion" satisfies the previous property.
 (program check_not_and ((conjunction Bool) (conclusion Bool))
   (Bool Bool) Bool
   (((check_not_and (not conjunction) conclusion)
@@ -710,11 +710,10 @@
 ;   built with the => constructor. The premise could be embedded
 ;   within a unit clause, built with @cl.
 ; - conclusion Bool: >
-;   Conclusion provided to the rule. Should be the characterization
-;   of the "premise" implication.
+;   Conclusion provided to the rule. 
 ; return: >
-;   A boolean indicating if "conclusion" satisfies the previous 
-;   property.
+;   A boolean indicating if "conclusion" is the characterization
+;   of the "premise" implication (i.e., "not antecedent or consequent" form).
 (program check_implies ((phi1 Bool) (phi2 Bool) (conclusion Bool))
   (Bool Bool) Bool
   (
@@ -735,8 +734,8 @@
 ;   built with the => constructor. The premise could be embedded
 ;   within a unit clause, built with @cl.
 ; requires: >
-;   The conclusion should be the characterization of the premise
-;   of the rule (an implication), as a clause built with @cl.
+;   The conclusion should be the characterization (i.e., "not antecedent 
+;   or consequent" form) of the implication given as premise of the rule.
 ; conclusion-given: >
 ;  Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule implies ((premise Bool))
@@ -783,41 +782,94 @@
   :conclusion refCL
 )
 
-(program check_equiv1 ((phi1 Bool) (phi2 Bool) (refCL Bool))
+;;;;;;;;;;;;;;;;;;
+; Rule 44: equiv1
+;;;;;;;;;;;;;;;;;;
+
+; program: check_equiv1
+; args:
+; - premise Bool: >
+;   An equivalence between some propositions phi1 and phi2 (phi1 = phi2).
+;   The premise could be embedded within a unit clause, built with @cl.
+; - conclusion Bool: >
+;   Conclusion provided to the rule. 
+; return: >
+;   A boolean indicating if "conclusion" is the characterization
+;   (i.e., "not antecedent or consequent" form) of the implication 
+;   phi1 => phi2.
+(program check_equiv1 ((phi1 Bool) (phi2 Bool) (conclusion Bool))
   (Bool Bool) Bool
   (
-   ((check_equiv1 (@cl (= phi1 phi2)) refCL)
-     (cl_equal (@cl (not phi1) phi2) refCL)
+   ((check_equiv1 (@cl (= phi1 phi2)) conclusion)
+     (cl_equal (@cl (not phi1) phi2) conclusion)
    )
-   ((check_equiv1 (= phi1 phi2) refCL)
-     (cl_equal (@cl (not phi1) phi2) refCL)
+   ((check_equiv1 (= phi1 phi2) conclusion)
+     (cl_equal (@cl (not phi1) phi2) conclusion)
    )
   )
 )
 
-(declare-rule equiv1 ((CL Bool))
-  :premises (CL)
-  :requires (((check_equiv1 CL eo::conclusion) true))
+; rule: equiv1
+; implements: TODO?
+; premises:
+; - premise Bool: >
+;   An equivalence between some propositions phi1 and phi2 (phi1 = phi2).
+;   The premise could be embedded within a unit clause, built with @cl.
+; requires: >
+;   The conclusion should be the characterization (i.e., "not antecedent 
+;   or consequent" form) of the implication phi1 => phi2.
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
+; conclusion:
+(declare-rule equiv1 ((premise Bool))
+  :premises (premise)
+  :requires (((check_equiv1 premise eo::conclusion) true))
   :conclusion-given
 )
 
-(program check_equiv2 ((phi1 Bool) (phi2 Bool) (refCL Bool))
+;;;;;;;;;;;;;;;;;;
+; Rule 45: equiv2
+;;;;;;;;;;;;;;;;;;
+
+; program: check_equiv2
+; args:
+; - premise Bool: >
+;   An equivalence between some propositions phi1 and phi2 (phi1 = phi2).
+;   The premise could be embedded within a unit clause, built with @cl.
+; - conclusion Bool: >
+;   Conclusion provided to the rule.
+; return: >
+;   A boolean indicating if "conclusion" is the characterization
+;   (i.e., "not antecedent or consequent" form) of the implication 
+;   phi2 => phi1.
+(program check_equiv2 ((phi1 Bool) (phi2 Bool) (conclusion Bool))
   (Bool Bool) Bool
   (
-   ((check_equiv2 (@cl (= phi1 phi2)) refCL)
-     (cl_equal (@cl phi1 (not phi2)) refCL)
+   ((check_equiv2 (@cl (= phi1 phi2)) conclusion)
+     (cl_equal (@cl phi1 (not phi2)) conclusion)
    )
-   ((check_equiv2 (= phi1 phi2) refCL)
-     (cl_equal (@cl phi1 (not phi2)) refCL)
+   ((check_equiv2 (= phi1 phi2) conclusion)
+     (cl_equal (@cl phi1 (not phi2)) conclusion)
    )
   )
 )
 
-(declare-rule equiv2 ((refCL Bool) (CL Bool))
-  :premises (CL)
-  :args (refCL)
-  :requires (((check_equiv2 CL refCL) true))
-  :conclusion refCL
+; rule: equiv2
+; implements: TODO?
+; premises:
+; - premise Bool: >
+;   An equivalence between some propositions phi1 and phi2 (phi1 = phi2).
+;   The premise could be embedded within a unit clause, built with @cl.
+; requires: >
+;   The conclusion should be the characterization (i.e., "not antecedent 
+;   or consequent" form) of the implication phi2 => phi1.
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
+; conclusion:
+(declare-rule equiv2 ((premise Bool))
+  :premises (premise)
+  :requires (((check_equiv2 premise eo::conclusion) true))
+  :conclusion-given
 )
 
 (program check_not_equiv1 ((phi1 Bool) (phi2 Bool) (refCL Bool))
@@ -839,18 +891,47 @@
   :conclusion refCL
 )
 
-;TODO
-(program check_and_pos ((Pos Int) (Conclusion Bool))
+;;;;;;;;;;;;;;;;;;
+; Rule 48: and_pos
+;;;;;;;;;;;;;;;;;;
+
+; program: check_and_pos
+; args:
+; - pos Int: Position of the selected conjunct.
+; - conclusion Bool: >
+;   The conclusion clause provided to the rule. It must be always built with
+;   @cl.
+; return: >
+;   A boolean indicating if "conclusion" satisfies the property of being
+;   an instance of the weakening rule for implication, where the antecedent is 
+;   a conjunction.
+(program check_and_pos ((pos Int) (antecedent Bool) (consequent Bool))
   (Int Bool) Bool
   (
-   ((check_and_pos Pos Conclusion) true)
+   ((check_and_pos pos (@cl (not antecedent) consequent))
+    (cl_equal (index_list and antecedent pos) consequent))
+
+   ;; To simplify the use of the checker
+   ((check_and_pos pos (@cl consequent (not antecedent)))
+    (cl_equal (index_list and antecedent pos) consequent))
   )
 )
 
 ;TRUST
-(declare-rule and_pos ((Pos Int))
-  :args (Pos)
-  :requires (((check_and_pos Pos eo::conclusion) true))
+; rule: and_pos
+; implements: TODO?
+; args:
+; - pos Int: Position of the conjunct selected in the weakening. 
+;            0 <= pos <= number of conjuncts - 1
+; requires: >
+;   The conclusion should be the characterization (i.e., "not antecedent 
+;   or consequent" form) of an instance of the weakening rule for implication,
+;   where the antecedent is a conjunction.
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
+(declare-rule and_pos ((pos Int))
+  :args (pos)
+  :requires (((check_and_pos pos eo::conclusion) true))
   :conclusion-given
 )
 
