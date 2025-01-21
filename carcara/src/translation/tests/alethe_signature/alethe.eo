@@ -951,15 +951,41 @@
   :conclusion CL
 )
 
-;TODO
-(program check_or_neg ((index Int) (CL Bool))
+;;;;;;;;;;;;;;;;;;
+; Rule 51: and_neg
+;;;;;;;;;;;;;;;;;;
+
+; program: check_or_neg
+; args:
+; - pos Int: Position of the selected disjunct.
+;            0 <= pos <= number of disjuncts - 1.
+; - conclusion Bool: >
+;   The conclusion clause provided to the rule. It must be always built with
+;   @cl.
+; return: >
+;   A boolean indicating if "conclusion" satisfies the property of being
+;   an instance of the weakening rule for implication, with the form 
+;   not phi_k, phi_0 \/ ... \/ phi_n, with 0 <= k <= n.
+(program check_or_neg ((index Int) (left_disjunct Bool) (right_disjunct Bool))
   (Int Bool) Bool
   (
-   ((check_or_neg index CL) true)
+   ((check_or_neg index (@cl left_disjunct (not right_disjunct)))
+    (prop_syntax_eq (index_list or left_disjunct index) right_disjunct))
+   
+   ((check_or_neg index (@cl (not left_disjunct) right_disjunct))
+    (prop_syntax_eq right_disjunct (index_list or left_disjunct index)))
   )
 )
 
-;TRUST
+; rule: or_neg
+; implements: TODO?
+; args:
+; - index Int: The index of the disjunct which is weakened in the conclusion.
+; requires: >
+;   Th conclusion must be an instance of the weakening rule for implication, 
+;   with the form not phi_k, phi_0 \/ ... \/ phi_n, with 0 <= k <= n.
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule or_neg ((index Int))
   :args (index)
   :requires (((check_or_neg index eo::conclusion) true))

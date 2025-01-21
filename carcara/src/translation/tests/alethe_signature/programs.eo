@@ -35,6 +35,21 @@
     )
 )
 
+; TODO: is it ok?
+; program: prop_syntax_eq
+; args:
+; - phi_1 Bool: A proposition.
+; - phi_2 Bool: A proposition.
+; return: A boolean indicating if phi_1 and phi_2 are syntactically equal.
+(program prop_syntax_eq ((phi Bool))
+  (Bool Bool) Bool
+  (
+   ((prop_syntax_eq phi phi) true)
+
+   ((prop_syntax_eq _ _) false)
+   )
+)
+
 ; program: cl_contains_prop
 ; args:
 ; - phi Bool: A proposition.
