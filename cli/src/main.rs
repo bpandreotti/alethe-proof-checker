@@ -691,7 +691,7 @@ fn translate_command(options: TranslateCommandOptions) -> CliResult<()> {
     // TODO: do not hard-code this in here
     // TODO: fix where to include these depedencies
     // Include Alethe's mechanization in Eunoia
-    println!("(include \"../alethe_signature/Alethe.eo\")");
+    println!("(include \"../alethe_signature/alethe.eo\")");
     println!("(include \"../alethe_signature/theory.eo\")");
     println!("(include \"../alethe_signature/programs.eo\")");
     println!("{}", std::str::from_utf8(&buf_prelude).unwrap());
