@@ -467,7 +467,7 @@
 )
 
 ;;;;;;;;;;;;;;;;;;
-; Rule 31: or
+; Rule 31: not_or
 ;;;;;;;;;;;;;;;;;;
 
 ; program: check_not_or
@@ -1746,10 +1746,31 @@
   :conclusion (@cl (= l r))
 )
 
+;;;;;;;;;;;;;;;;;;
+; Rule 94: and_neg
+;;;;;;;;;;;;;;;;;;
+
+; program: check_la_rw_eq
+; args:
+; - t Real:
+; - u Real:
+; return:
+(program check_la_rw_eq ((t Real) (u Real))
+  (Bool) Bool
+  (
+   ((check_la_rw_eq (@cl (= (= t u) (and (<= t u) (<= u t))))) true)
+  )
+)
+
 ; TODO: other number types. Can the equality be flipped?
-(declare-rule la_rw_eq ((t Real) (u Real))
-  :args ((@cl (= (= t u) (and (<= t u) (<= u t)))))
-  :conclusion (@cl (= (= t u) (and (<= t u) (<= u t))))
+; rule: la_rw_eq
+; implements: TODO?
+; requires:
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
+(declare-rule la_rw_eq ()
+  :requires (((check_la_rw_eq eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO

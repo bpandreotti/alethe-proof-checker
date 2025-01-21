@@ -3,7 +3,7 @@
 # Generates Alethe proof certificates, using $COMMAND, from input problems
 # contained in $DIR.
 DIR="./verit_problems/"
-COMMAND="../../../../../verit/veriT --proof=- --disable-print-success --disable-banner --proof-prune"
+COMMAND="../../../../../verit/veriT --proof=- --disable-print-success --disable-banner --proof-prune --proof-merge"
 CARCARA_COMMAND="../../../../target/release/carcara check --expand-let-bindings --allow-int-real-subtyping --ignore-unknown-rules"
 
 # Loop through each file in the directory.
