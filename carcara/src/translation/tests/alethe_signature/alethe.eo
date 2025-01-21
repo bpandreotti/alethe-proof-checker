@@ -1166,29 +1166,83 @@
   :conclusion-given
 )
 
-;TODO
-(program check_equiv_pos1 ((CL Bool))
+;;;;;;;;;;;;;;;;;;;;;;;
+; Rule 59: equiv_pos1
+;;;;;;;;;;;;;;;;;;;;;;;
+
+; program: check_equiv_pos1
+; args:
+; - conclusion Bool: >
+;   This should be the conclusion to the application of equiv_pos1. It must be
+;   a clause built with @cl.
+; return: >
+;   A boolean indicating if "conclusion" is cl_equal to the clause 
+;   not (phi_1 = phi2), phi_1, not phi_2, for some props. phi_1 and phi_2.
+(program check_equiv_pos1 ((phi_1 Bool) (phi_2 Bool) (phi_3 Bool) (phi_4 Bool))
   (Bool) Bool
-  (
-   ((check_equiv_pos1 CL) true)
+  (; TODO: simplify this
+   ((check_equiv_pos1 (@cl (not (= phi_1 phi_2)) phi_3 phi_4))
+    (cl_equal (@cl phi_1 (not phi_2)) (@cl phi_3 phi_4)))
+   
+   ((check_equiv_pos1 (@cl phi_3 (not (= phi_1 phi_2)) phi_4))
+    (cl_equal (@cl phi_1 (not phi_2)) (@cl phi_3 phi_4)))
+   
+   ((check_equiv_pos1 (@cl phi_3 phi_4 (not (= phi_1 phi_2))))
+    (cl_equal (@cl phi_1 (not phi_2)) (@cl phi_3 phi_4)))
+
+   ((check_equiv_pos1 _)
+    false)
   )
 )
 
-;TRUST
+; rule: equiv_pos1
+; implements: TODO?
+; requires: >
+;   Requires for the conclusion to be cl_equal to the clause 
+;   not (phi_1 = phi2), phi_1, not phi_2, for some props. phi_1 and phi_2.
+; conclusion-given: >
+;   Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule equiv_pos1 ()
   :requires (((check_equiv_pos1 eo::conclusion) true))
   :conclusion-given
 )
 
-;TODO
-(program check_equiv_pos2 ((CL Bool))
+;;;;;;;;;;;;;;;;;;;;;;;
+; Rule 60: equiv_pos2
+;;;;;;;;;;;;;;;;;;;;;;;
+
+; program: check_equiv_pos2
+; args:
+; - conclusion Bool: >
+;   This should be the conclusion to the application of equiv_pos2. It must be
+;   a clause built with @cl.
+; return: >
+;   A boolean indicating if "conclusion" is cl_equal to the clause 
+;   not (phi_1 = phi2), not phi_1, phi_2, for some props. phi_1 and phi_2.
+(program check_equiv_pos2 ((phi_1 Bool) (phi_2 Bool) (phi_3 Bool) (phi_4 Bool))
   (Bool) Bool
-  (
-   ((check_equiv_pos2 CL) true)
+  (; TODO: simplify this
+   ((check_equiv_pos2 (@cl (not (= phi_1 phi_2)) phi_3 phi_4))
+    (cl_equal (@cl (not phi_1) phi_2) (@cl phi_3 phi_4)))
+   
+   ((check_equiv_pos2 (@cl phi_3 (not (= phi_1 phi_2)) phi_4))
+    (cl_equal (@cl (not phi_1) phi_2) (@cl phi_3 phi_4)))
+   
+   ((check_equiv_pos2 (@cl phi_3 phi_4 (not (= phi_1 phi_2))))
+    (cl_equal (@cl (not phi_1) phi_2) (@cl phi_3 phi_4)))
+
+   ((check_equiv_pos2 _)
+    false)
   )
 )
 
-;TRUST
+; rule: equiv_pos2
+; implements: TODO?
+; requires: >
+;   Requires for the conclusion to be cl_equal to the clause 
+;   not (phi_1 = phi2), not phi_1, phi_2, for some props. phi_1 and phi_2.
+; conclusion-given: >
+;   Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule equiv_pos2 ()
   :requires (((check_equiv_pos2 eo::conclusion) true))
   :conclusion-given
