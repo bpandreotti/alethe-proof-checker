@@ -432,12 +432,13 @@
 ;   Premise of the "and" rule: a conjunction of terms. 
 ;   It could be embedded within a single-term clause 
 ;   (built with @cl).
-; - index Int          : Conjunct index, as provided to the rule.
+; - index Int          : >
+;   Conjunct index, as provided to the rule. 0 <= index <= number of conjuncts - 1
 ; - conclusion Bool    : >
 ;   Conclusion provided to the rule. 
 ; return: >
 ;   A boolean indicating if "conclusion" is a conjunct from 
-;   "premise", with index "index", for the conclusion to check.
+;   "premise", with index "index".
 (program check_and ((premise Bool) (premise_non_cl Bool) (index Int) (conclusion Bool))
   (Bool Int Bool) Bool
   (((check_and premise index conclusion)
@@ -451,7 +452,8 @@
 ; premises:
 ; - premise: The conjunctions over which "and elimination" is applied.
 ; args:
-; - index Int: The index of the conjunct being selected.
+; - index Int: >
+;   The index of the conjunct being selected. 0 <= index <= number of conjuncts - 1.
 ; requires: >
 ;   The conclusion should be one conjunct from the premise,
 ;   in the position indicated by index.
@@ -474,7 +476,8 @@
 ;   Premise of the "not_or" rule: a negation of a disjunction of terms.
 ;   It could be embedded within a single-term clause 
 ;   (built with @cl).
-; - index Int          : Conjunct index, as provided to the rule.
+; - index Int          : >
+;   Conjunct index, as provided to the rule. 0 <= index <= number of conjuncts - 1
 ; - conclusion Bool    : >
 ;   Conclusion provided to the rule. 
 ; return: >
@@ -498,6 +501,7 @@
 ; - premise: The negated disjunction over which "not_or" is applied.
 ; args:
 ; - index Int: The index of the conjunct being selected.
+;              0 <= index <= number of conjuncts - 1
 ; requires: >
 ;   The conclusion should be one disjunct from the result
 ;   of applying DeMorgan's rule over the premise. The disjunct
@@ -515,26 +519,6 @@
 ;;;;;;;;;;;;;;;;;;
 ; Rule 32: or
 ;;;;;;;;;;;;;;;;;;
-
-; program: convert_or_to_cl
-; args:
-; - or_clause Bool : >
-;   Clause to convert, built with the "or" operator.
-; - accum Bool : Partial result accumulator
-; return: >
-;   A clause equivalent to "or_clause", built exclusively with @cl.
-(program convert_or_to_cl ((or_clause Bool) (accum Bool) 
-                           (disjunct_1 Bool) (disjunct_2 Bool) 
-                           (disjunct_cl_1 Bool) (disjunct_cl_2 Bool))
-  (Bool) Bool
-  (((convert_or_to_cl (or disjunct_1 disjunct_2))
-    (@cl disjunct_1 (from_cl (convert_or_to_cl disjunct_2))))
-
-   ; { disjunct_1 is not built with "or" }
-   ((convert_or_to_cl disjunct_1)
-    (@cl disjunct_1))
-   )
-)
 
 ; program: check_or
 ; args:
@@ -573,23 +557,6 @@
 ;;;;;;;;;;;;;;;;;;
 ; Rule 37: not_and
 ;;;;;;;;;;;;;;;;;;
-
-; program: transform_not_and
-; args:
-; - ls Bool: A conjunction of terms.
-; return: >
-;   Applies De Morgan's law over the conjuncts of "ls", returning a new clause
-;   built with @cl.
-(program transform_not_and ((l Bool) (ls Bool))
-  (Bool) Bool
-  (
-   ((transform_not_and (and l ls))
-    (@cl (not l) (from_cl (transform_not_and ls)))
-    )
-
-   ((transform_not_and l) (@cl (not l)))
-  )
-)
 
 ; program: check_not_and
 ; args:
@@ -897,7 +864,8 @@
 
 ; program: check_and_pos
 ; args:
-; - pos Int: Position of the selected conjunct.
+; - pos Int: Position of the selected conjunct. 
+;            0 <= pos <= number of conjuncts - 1.
 ; - conclusion Bool: >
 ;   The conclusion clause provided to the rule. It must be always built with
 ;   @cl.
@@ -935,15 +903,34 @@
   :conclusion-given
 )
 
-;TODO
-(program check_and_neg ((CL Bool))
+;;;;;;;;;;;;;;;;;;
+; Rule 49: and_neg
+;;;;;;;;;;;;;;;;;;
+
+; program: check_and_neg
+; args:
+; - conclusion Bool: >
+;   This should be the conclusion to the application of and_neg. It must be
+;   a clause built with @cl.
+; return: >
+;   A boolean indicating if "conclusion" is an instance of excluded middle,
+;   for a proposition of the form phi_1 /\ ... /\ phi_n.
+(program check_and_neg ((left_disjunct Bool) (right_disjunct Bool :list))
   (Bool) Bool
   (
-   ((check_and_neg CL) true)
+   ((check_and_neg (@cl left_disjunct right_disjunct))
+    (cl_equal (transform_not_and left_disjunct)
+              right_disjunct))
   )
 )
 
-;TRUST
+; rule: and_neg
+; implements: TODO?
+; requires: >
+;   The conclusion should be an instance of excluded middle,
+;   for a proposition of the form phi_1 /\ ... /\ phi_n.
+; conclusion-given: >
+;   Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule and_neg ()
   :requires (((check_and_neg eo::conclusion) true))
   :conclusion-given
