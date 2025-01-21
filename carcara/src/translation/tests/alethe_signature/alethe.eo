@@ -1066,7 +1066,7 @@
 ;   for a proposition of the form phi_1 -> phi_2.
 (program check_implies_pos ((phi_1 Bool) (phi_2 Bool) (phi_3 Bool) (phi_4 Bool))
   (Bool) Bool
-  (
+  (; TODO: simplify this
    ((check_implies_pos (@cl (not (=> phi_1 phi_2)) phi_3 phi_4))
     (cl_equal (@cl (not phi_1) phi_2) (@cl phi_3 phi_4)))
 
@@ -1090,30 +1090,78 @@
   :conclusion-given
 )
 
-;TODO
-(program check_implies_neg1 ((CL Bool))
+;;;;;;;;;;;;;;;;;;;;;;;
+; Rule 57: implies_neg1
+;;;;;;;;;;;;;;;;;;;;;;;
+
+; program: check_implies_neg1
+; args:
+; - CL Bool: >
+;   This should be the conclusion to the application of implies_neg1. It must be
+;   a clause built with @cl.
+; return:
+;   A boolean indicating if "conclusion" is cl_equal to phi_1 -> phi_2, phi1,
+;   for some propositions phi_1 and phi_2.
+(program check_implies_neg1 ((phi_1 Bool) (phi_2 Bool))
   (Bool) Bool
   (
-   ((check_implies_neg1 CL) true)
+   ((check_implies_neg1 (@cl (=> phi_1 phi_2) phi_1))
+    true)
+
+   ((check_implies_neg1 (@cl phi_1 (=> phi_1 phi_2)))
+    true)
+
+   ((check_implies_neg1 _)
+    false)
   )
 )
 
-;TRUST
+; rule: implies_neg1
+; implements: TODO?
+; requires: >
+;   Requires for "conclusion" to be cl_equal to phi_1 -> phi_2, phi1,
+;   for some propositions phi_1 and phi_2.
+; conclusion-given: >
+;   Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule implies_neg1 ()
   :requires (((check_implies_neg1 eo::conclusion) true))
   :conclusion-given
 )
 
-;TODO
-(program check_implies_neg2 ((CL Bool))
+;;;;;;;;;;;;;;;;;;;;;;;
+; Rule 58: implies_neg2
+;;;;;;;;;;;;;;;;;;;;;;;
+
+; program: check_implies_neg2
+; args:
+; - CL Bool: >
+;   This should be the conclusion to the application of implies_neg2. It must be
+;   a clause built with @cl.
+; return:
+;   A boolean indicating if "conclusion" is cl_equal to phi_1 -> phi_2, not phi2,
+;   for some propositions phi_1 and phi_2.
+(program check_implies_neg2 ((phi_1 Bool) (phi_2 Bool))
   (Bool) Bool
   (
-   ((check_implies_neg2 CL) true)
+   ((check_implies_neg2 (@cl (=> phi_1 phi_2) (not phi_2)))
+    true)
+
+   ((check_implies_neg2 (@cl (not phi_2) (=> phi_1 phi_2)))
+    true)
+
+   ((check_implies_neg2 _)
+    false)
   )
 )
 
-;TRUST
-(declare-rule implies_neg2 ((CL Bool))
+; rule: implies_neg2
+; implements: TODO?
+; requires: >
+;   Requires for "conclusion" to be cl_equal to phi_1 -> phi_2, not phi2,
+;   for some propositions phi_1 and phi_2.
+; conclusion-given: >
+;   Only the "requires" predicate checks if a proper conclusion is given.
+(declare-rule implies_neg2 ()
   :requires (((check_implies_neg2 eo::conclusion) true))
   :conclusion-given
 )
