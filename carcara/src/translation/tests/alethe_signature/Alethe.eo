@@ -452,7 +452,11 @@
 ; - premise: The conjunctions over which "and elimination" is applied.
 ; args:
 ; - index Int: The index of the conjunct being selected.
-; conclusion: The selected conjunct.
+; requires: >
+;   The conclusion should be one conjunct from the premise,
+;   in the position indicated by index.
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule and ((premise Bool) (index Int))
   :premises (premise)
   :args (index)
@@ -494,7 +498,13 @@
 ; - premise: The negated disjunction over which "not_or" is applied.
 ; args:
 ; - index Int: The index of the conjunct being selected.
-; conclusion: The selected conjunct.
+; requires: >
+;   The conclusion should be one disjunct from the result
+;   of applying DeMorgan's rule over the premise. The disjunct
+;   position must correspond to what is specified by the index
+;   parameter
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule not_or ((premise Bool) (index Int))
   :premises (premise)
   :args (index)
@@ -549,7 +559,11 @@
 ; - premise: >
 ;   The clause, built with the "or" operator, over which the rule is applied. 
 ;   It could be embedded within a single-term clause built with @cl.
-; conclusion: A clause equivalent to "premise", but built with @cl.
+; requires: >
+;   The conclusion should be a clause equivalent to "premise", 
+;   but built with @cl.
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule or ((premise Bool))
   :premises (premise)
   :requires (((check_or premise eo::conclusion) true))
@@ -691,19 +705,24 @@
 
 ; program: check_implies
 ; args:
-; - phi1 Bool:
-; - phi2 Bool:
-; - refCL Bool:
-; return:
-(program check_implies ((phi1 Bool) (phi2 Bool) (refCL Bool))
+; - premise Bool: >
+;   Premise of the implies rule. Should be an implication,
+;   built with the => constructor. The premise could be embedded
+;   within a unit clause, built with @cl.
+; - conclusion Bool: >
+;   Conclusion provided to the rule. Should be the characterization
+;   of the "premise" implication.
+; return: >
+;   A boolean indicating if "conclusion" satisfies the previous 
+;   property.
+(program check_implies ((phi1 Bool) (phi2 Bool) (conclusion Bool))
   (Bool Bool) Bool
   (
-   ((check_implies (@cl (=> phi1 phi2)) refCL)
-     (cl_equal (@cl (not phi1) phi2) refCL)
+   ((check_implies (@cl (=> phi1 phi2)) conclusion)
+     (cl_equal (@cl (not phi1) phi2) conclusion)
    )
-   ;; TODO: why do we have this case?
-   ((check_implies (=> phi1 phi2) refCL)
-     (cl_equal (@cl (not phi1) phi2) refCL)
+   ((check_implies (=> phi1 phi2) conclusion)
+     (cl_equal (@cl (not phi1) phi2) conclusion)
    )
   )
 )
@@ -711,9 +730,15 @@
 ; rule: implies
 ; implements: TODO?
 ; premises:
-; - premise Bool:
-; requires:
-; conclusion:
+; - premise Bool: >
+;   Premise of the implies rule. Should be an implication,
+;   built with the => constructor. The premise could be embedded
+;   within a unit clause, built with @cl.
+; requires: >
+;   The conclusion should be the characterization of the premise
+;   of the rule (an implication), as a clause built with @cl.
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule implies ((premise Bool))
   :premises (premise)
   :requires (((check_implies premise eo::conclusion) true))
