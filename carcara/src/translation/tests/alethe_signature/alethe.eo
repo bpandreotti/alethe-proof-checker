@@ -47,7 +47,10 @@
   :conclusion CL
 )
 
-;TODO
+;;;;;;;;;;;;;;;;;;;;;;;
+; Rule 6: th_resolution
+;;;;;;;;;;;;;;;;;;;;;;;
+; TODO
 (program check_resolution ((Cs Bool) (CL Bool))
   (Bool Bool) Bool
   (
@@ -55,13 +58,15 @@
   )
 )
 
-;TRUST
-(declare-rule th_resolution ((Cs Bool) (CL Bool))
+(declare-rule th_resolution ((Cs Bool))
   :premise-list Cs and
-  :args (CL)
-  :requires (((check_resolution Cs CL) true))
-  :conclusion CL
+  :requires (((check_resolution Cs eo::conclusion) true))
+  :conclusion-given
 )
+
+;;;;;;;;;;;;;;;;;;;;;;;
+; Rule 7: resolution
+;;;;;;;;;;;;;;;;;;;;;;;
 
 ;TRUST
 (declare-rule resolution ((Cs Bool))
@@ -442,7 +447,7 @@
 (program check_and ((premise Bool) (premise_non_cl Bool) (index Int) (conclusion Bool))
   (Bool Int Bool) Bool
   (((check_and premise index conclusion)
-    (cl_equal (to_cl (index_list and (from_cl premise) index))
+    (cl_equal (to_cl (f_list_index and (from_cl premise) index))
                conclusion))
   )
 )
@@ -491,7 +496,7 @@
     (check_not_or premise_non_cl index conclusion))
 
    ((check_not_or (not disjuncts) index conclusion)
-    (cl_equal (to_cl (not (index_list or disjuncts index)))
+    (cl_equal (to_cl (not (f_list_index or disjuncts index)))
                conclusion))
    )
 )
@@ -570,7 +575,7 @@
 (program check_not_and ((conjunction Bool) (conclusion Bool))
   (Bool Bool) Bool
   (((check_not_and (not conjunction) conclusion)
-     (cl_equal (transform_not_and conjunction) conclusion)
+     (cl_equal (de_morgan_not_and conjunction) conclusion)
      )
   )
 )
@@ -877,11 +882,11 @@
   (Int Bool) Bool
   (
    ((check_and_pos pos (@cl (not antecedent) consequent))
-    (cl_equal (index_list and antecedent pos) consequent))
+    (cl_equal (f_list_index and antecedent pos) consequent))
 
    ;; To simplify the use of the checker
    ((check_and_pos pos (@cl consequent (not antecedent)))
-    (cl_equal (index_list and antecedent pos) consequent))
+    (cl_equal (f_list_index and antecedent pos) consequent))
   )
 )
 
@@ -919,7 +924,7 @@
   (Bool) Bool
   (
    ((check_and_neg (@cl left_disjunct right_disjunct))
-    (cl_equal (transform_not_and left_disjunct)
+    (cl_equal (de_morgan_not_and left_disjunct)
               right_disjunct))
   )
 )
@@ -970,10 +975,10 @@
   (Int Bool) Bool
   (
    ((check_or_neg index (@cl left_disjunct (not right_disjunct)))
-    (prop_syntax_eq (index_list or left_disjunct index) right_disjunct))
+    (prop_syntax_eq (f_list_index or left_disjunct index) right_disjunct))
    
    ((check_or_neg index (@cl (not left_disjunct) right_disjunct))
-    (prop_syntax_eq right_disjunct (index_list or left_disjunct index)))
+    (prop_syntax_eq right_disjunct (f_list_index or left_disjunct index)))
   )
 )
 
@@ -1632,18 +1637,17 @@
 )
 
 ;TODO
-(program check_prod_simplify ((l Bool) (r Bool))
-  (Bool Bool) Bool
+(program check_prod_simplify ((conclusion Bool))
+  (Bool) Bool
   (
-   ((check_prod_simplify l r) true)
+   ((check_prod_simplify conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule prod_simplify ((l Bool) (r Bool))
-  :args ((@cl (= l r)))
-  :requires (((check_prod_simplify l r) true))
-  :conclusion (@cl (= l r))
+(declare-rule prod_simplify ()
+  :requires (((check_prod_simplify eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
@@ -1731,30 +1735,88 @@
   :conclusion-given
 )
 
-;TODO
-(program check_distinct_elim ((l Bool) (r Bool))
+;;;;;;;;;;;;;;;;;;;;;;;;
+; Rule 93: distinct_elim
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+; program: build_distinct_list_single_elem
+; args:
+; - lhs Bool:
+; - distinct_list Bool: a distinct-list
+; return:
+(program build_distinct_list_single_elem ((lhs Bool) (hd Bool) (tail Bool))
   (Bool Bool) Bool
   (
-   ((check_distinct_elim l r) true)
+   ((build_distinct_list_single_elem lhs (distinct Bool hd tail))
+    (and (not (= lhs hd)) 
+         (build_distinct_list_single_elem lhs (distinct Bool tail))))
+
+   ; { hd is single element distinct-list }
+   ((build_distinct_list_single_elem lhs (distinct Bool hd))
+    (not (= lhs hd)))
   )
 )
 
-;TRUST
-(declare-rule distinct_elim ((l Bool) (r Bool))
-  :args ((@cl (= l r)))
-  :requires (((check_distinct_elim l r) true))
-  :conclusion (@cl (= l r))
+; program: check_distinct_elim
+; args:
+; - l Bool:
+; - r Bool:
+; return:
+(program build_distinct_list_full_list ((lhs Bool) (rhs Bool) (tl Bool :list))
+  (Bool) Bool
+  (
+   ((build_distinct_list_full_list (and (distinct lhs rhs) tl
+                                        ))
+    (and (not (= lhs rhs))
+         (build_distinct_list_full_list tl)))
+
+   ; Only one proposition
+   ((build_distinct_list_full_list (distinct lhs rhs)) (not (= lhs rhs)))
+
+   ; Only one proposition
+   ((build_distinct_list_full_list (distinct lhs)) true)
+   
+   ((build_distinct_list_full_list true) true)
+  )
 )
 
-;;;;;;;;;;;;;;;;;;
-; Rule 94: and_neg
-;;;;;;;;;;;;;;;;;;
+(program check_distinct_elim ((hd Bool) (tl Bool) (conjunctions Bool))
+  (Bool) Bool
+  (
+   ((check_distinct_elim (@cl (= (distinct Bool hd tl) conjunctions)))
+    ;; (f_list_equal and 
+                  (build_distinct_list_full_list (distinct Bool hd tl))
+                  ;; conjunctions)
+                  )
+
+   ; Only one proposition
+   ((check_distinct_elim (@cl (= (distinct Bool hd) true))) true)
+  )
+)
+
+; rule: distinct_elim
+; implements: TODO?
+; premises:
+; - distinct_elim nil:
+; args:
+; requires:
+; conclusion:
+(declare-rule distinct_elim ()
+  :requires (((check_distinct_elim eo::conclusion) true))
+  :conclusion-given
+)
+
+;;;;;;;;;;;;;;;;;;;
+; Rule 94: la_rw_eq
+;;;;;;;;;;;;;;;;;;;
 
 ; program: check_la_rw_eq
 ; args:
-; - t Real:
-; - u Real:
-; return:
+; - conclusion Bool: >
+;   The conclusion provided to the la_rw_eq rule. Must be build with @cl.
+; return: >
+;   A boolean indicating if "conclusion" is a clause of the form 
+;   (= (= t u) (and (<= t u) (<= u t))), for some numbers t and u.
 (program check_la_rw_eq ((t Real) (u Real))
   (Bool) Bool
   (
@@ -1765,7 +1827,9 @@
 ; TODO: other number types. Can the equality be flipped?
 ; rule: la_rw_eq
 ; implements: TODO?
-; requires:
+; requires: >
+;   Requires for the conclusion to be a clause of the form 
+;   (= (= t u) (and (<= t u) (<= u t))), for some numbers t and u.
 ; conclusion-given: >
 ;  Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule la_rw_eq ()
