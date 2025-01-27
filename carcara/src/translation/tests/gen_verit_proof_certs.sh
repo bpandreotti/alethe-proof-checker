@@ -4,7 +4,7 @@
 # contained in $DIR.
 DIR="./verit_problems/"
 COMMAND="../../../../../verit_gitlab/verit/veriT --proof=- --disable-print-success --disable-banner --proof-prune --proof-merge"
-CARCARA_COMMAND="../../../../target/release/carcara check --expand-let-bindings --allow-int-real-subtyping --ignore-unknown-rules"
+CARCARA_COMMAND="../../../../target/release/carcara check --allow-int-real-subtyping --ignore-unknown-rules"
 
 # Loop through each file in the directory.
 for FILE in "$DIR"/*; do

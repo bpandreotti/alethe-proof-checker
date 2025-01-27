@@ -1744,53 +1744,60 @@
 ; - lhs Bool:
 ; - distinct_list Bool: a distinct-list
 ; return:
-(program build_distinct_list_single_elem ((lhs Bool) (hd Bool) (tail Bool))
-  (Bool Bool) Bool
-  (
-   ((build_distinct_list_single_elem lhs (distinct Bool hd tail))
-    (and (not (= lhs hd)) 
-         (build_distinct_list_single_elem lhs (distinct Bool tail))))
+;; (program build_distinct_list_single_elem ((A Type) (lhs A) (hd A) (tail A))
+;;   (A A) Bool
+;;   (
+;;    ((build_distinct_list_single_elem lhs (distinct A hd tail))
+;;     (and (not (= lhs hd)) 
+;;          (build_distinct_list_single_elem lhs (distinct A tail))))
 
-   ; { hd is single element distinct-list }
-   ((build_distinct_list_single_elem lhs (distinct Bool hd))
-    (not (= lhs hd)))
-  )
-)
+;;    ; { hd is single element distinct-list }
+;;    ((build_distinct_list_single_elem lhs (distinct A hd))
+;;     (not (= lhs hd)))
+;;   )
+;; )
 
 ; program: check_distinct_elim
 ; args:
 ; - l Bool:
 ; - r Bool:
 ; return:
-(program build_distinct_list_full_list ((lhs Bool) (rhs Bool) (tl Bool :list))
+(program build_distinct_list ((A Type) (lhs A) (rhs A) (tl Bool :list))
   (Bool) Bool
   (
-   ((build_distinct_list_full_list (and (distinct lhs rhs) tl
-                                        ))
-    (and (not (= lhs rhs))
-         (build_distinct_list_full_list tl)))
+   ((build_distinct_list (and (distinct lhs rhs) tl))
+
+    (f_list_cons and 
+                 (not (= lhs rhs)) 
+                 (build_distinct_list tl)))
 
    ; Only one proposition
-   ((build_distinct_list_full_list (distinct lhs rhs)) (not (= lhs rhs)))
+   ((build_distinct_list (distinct lhs rhs)) 
+
+    (not (= lhs rhs)))
 
    ; Only one proposition
-   ((build_distinct_list_full_list (distinct lhs)) true)
+   ((build_distinct_list (distinct lhs)) 
+
+    true)
    
-   ((build_distinct_list_full_list true) true)
+   ((build_distinct_list true) 
+
+    true)
   )
 )
 
-(program check_distinct_elim ((hd Bool) (tl Bool) (conjunctions Bool))
-  (Bool) Bool
+(program check_distinct_elim ((A Type) (hd A) (tl A :list) (conjunctions Bool))
+  (A) Bool
   (
-   ((check_distinct_elim (@cl (= (distinct Bool hd tl) conjunctions)))
-    ;; (f_list_equal and 
-                  (build_distinct_list_full_list (distinct Bool hd tl))
-                  ;; conjunctions)
+   ((check_distinct_elim (@cl (= (distinct hd tl) conjunctions)))
+    (f_list_equal and 
+                  (build_distinct_list (distinct hd tl))
+                  conjunctions)
                   )
 
    ; Only one proposition
-   ((check_distinct_elim (@cl (= (distinct Bool hd) true))) true)
+   ((check_distinct_elim (@cl (= (distinct hd) true))) true)
   )
 )
 

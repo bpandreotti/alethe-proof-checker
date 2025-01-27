@@ -29,6 +29,13 @@
   )
 )
 
+; program: f_list_contains_elem
+; args:
+; - f (-> A A A): Operator used to build the f-list.
+; - elem A: Some element of type A, for which we want to test membership.
+; - list A: An f-list.
+; return:
+; A boolean indicating if "elem" appears in f-list "list".
 (program f_list_contains_elem ((A Type) (f (-> A A A)) (elem A) 
                                (hd A) (tl A :list))
   ((-> A A A) A A) Bool
@@ -45,6 +52,13 @@
   )
 )
 
+; program: f_list_contains_elem
+; args:
+; - f (-> A A A): Operator used to build the f-list.
+; - list_1 A: An f-list.
+; - list_2 A: An f-list.
+; return:
+; A boolean indicating if the elements from list_1 also appear in list_2.
 (program f_list_contains_f_list ((A Type) (f (-> A A A)) (elem A) 
                                  (hd A) (tl A :list)
                                  (f_list_2 A))
@@ -64,12 +78,43 @@
   )
 )
 
+; program: f_list_contains_elem
+; args:
+; - f (-> A A A): Operator used to build the f-list.
+; - list_1 A: An f-list.
+; - list_2 A: An f-list.
+; return: >
+; A boolean indicating if the operands from list_1 and list_2 are the 
+; same, regardless of the order.
 (program f_list_equal ((A Type) (f (-> A A A)) (f_list_1 A) (f_list_2 A))
   ((-> A A A) A A) Bool
   (
    ((f_list_equal f f_list_1 f_list_2)
     (eo::and (f_list_contains_f_list f f_list_1 f_list_2)
              (f_list_contains_f_list f f_list_2 f_list_1)))
+  )
+)
+
+; program: f_list_concat
+; args:
+; - f (-> A A A): Operator used to build the f-list.
+; - elem A: An element of type A.
+; - flist A: An f-list.
+; return: >
+; Returns an f-list, with first operand "elem", followed by operands of flist_2.
+
+(program f_list_cons ((A Type) (f (-> A A A))
+                      (elem A)
+                      (hd_2 A) (tl_2 A :list))
+  ((-> A A A) A A) A
+  (
+   ((f_list_cons f elem (f hd_2 tl_2))
+
+    (f elem (f hd_2 tl_2)))
+   
+   ((f_list_cons f elem hd_2)
+
+    (f elem hd_2))
   )
 )
 
