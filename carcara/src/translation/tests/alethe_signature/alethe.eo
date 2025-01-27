@@ -1739,29 +1739,12 @@
 ; Rule 93: distinct_elim
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-; program: build_distinct_list_single_elem
+; program: build_distinct_list
 ; args:
-; - lhs Bool:
-; - distinct_list Bool: a distinct-list
+; - list Bool: An and-list of distinct-list elements.
 ; return:
-;; (program build_distinct_list_single_elem ((A Type) (lhs A) (hd A) (tail A))
-;;   (A A) Bool
-;;   (
-;;    ((build_distinct_list_single_elem lhs (distinct A hd tail))
-;;     (and (not (= lhs hd)) 
-;;          (build_distinct_list_single_elem lhs (distinct A tail))))
-
-;;    ; { hd is single element distinct-list }
-;;    ((build_distinct_list_single_elem lhs (distinct A hd))
-;;     (not (= lhs hd)))
-;;   )
-;; )
-
-; program: check_distinct_elim
-; args:
-; - l Bool:
-; - r Bool:
-; return:
+; Returns the reinterpretation of the given and-list of distinct-list elements,
+; as a conjunction of inequalities.
 (program build_distinct_list ((A Type) (lhs A) (rhs A) (tl Bool :list))
   (Bool) Bool
   (
@@ -1787,14 +1770,104 @@
   )
 )
 
-(program check_distinct_elim ((A Type) (hd A) (tl A :list) (conjunctions Bool))
-  (A) Bool
+; TODO: DELETE THIS IF WE FIND A GENERIC WAY TO IMPLEMENT THIS
+
+; program: conjunction_contains_ineq
+; args:
+; - ineq Bool: >
+;   An inequality of the form (not (= lhs rhs)), for some terms lhs and rhs of
+;   type A.
+; - conjunctions Bool: A conjunctions of inequalities of the form (not (= lhs' rhs'))
+; return:
+;   A boolean indicating if ineq appears in "conjunctions".
+(program conjunction_contains_ineq ((A Type) (lhs A) (rhs A) (hd Bool) (tl Bool :list))
+  (Bool Bool) Bool
   (
-   ((check_distinct_elim (@cl (= (distinct hd tl) conjunctions)))
-    (f_list_equal and 
-                  (build_distinct_list (distinct hd tl))
-                  conjunctions)
-                  )
+   ((conjunction_contains_ineq (not (= lhs rhs)) (and (not (= lhs rhs)) tl))
+
+    true)
+
+   ((conjunction_contains_ineq (not (= lhs rhs)) (and (not (= rhs lhs)) tl))
+
+    true)
+
+   ; { hd =/= not (= rhs lhs))}
+   ((conjunction_contains_ineq (not (= lhs rhs)) (and hd tl))
+
+    (conjunction_contains_ineq (not (= lhs rhs)) tl))
+
+   
+   ((conjunction_contains_ineq (not (= lhs rhs)) (not (= lhs rhs)))
+
+    true)
+
+   ((conjunction_contains_ineq (not (= lhs rhs)) (not (= rhs lhs)))
+
+    true)
+
+   ; { hd =/= (not (= lhs rhs))}
+   ((conjunction_contains_ineq (not (= lhs rhs)) hd)
+
+    false)
+  )
+)
+
+; program: conjunction_contains_conjunction
+; args:
+; - list_1 A: An and-list, of inequalities of the form (not (= lhs rhs))
+; - list_2 A: An and-list, of inequalities of the form (not (= lhs rhs)).
+; return:
+; A boolean indicating if the elements from list_1 also appear in list_2.
+(program conjunction_contains_conjunction ((hd Bool) (tl Bool :list)
+                                           (f_list_2 Bool))
+  (Bool Bool) Bool
+  (
+   ((conjunction_contains_conjunction (and hd tl) f_list_2)
+    ;; TODO: I need some way to build boolean values
+    ;; combining other boolean values, but I would like
+    ;; to avoid built-in operators.
+    (eo::and (conjunction_contains_ineq hd f_list_2)
+             (conjunction_contains_conjunction tl f_list_2)))
+
+ 
+   ; { f_list_1 is not an and-list}
+   ((conjunction_contains_conjunction true f_list_2)
+    true)
+   
+   ; { hd must be an inequaity }
+   ((conjunction_contains_conjunction hd f_list_2)
+    (conjunction_contains_ineq hd f_list_2))
+  )
+)
+
+; program: conjunctions_equal
+; args:
+; - list_1 A: An and-list, of inequalities of the form (not (= lhs rhs))
+; - list_2 A: An and-list, of inequalities of the form (not (= lhs rhs)).
+; return: >
+; A boolean indicating if the conjuncts from list_1 and list_2 are the 
+; same, regardless of the order.
+(program conjunctions_equal ((list_1 Bool) (list_2 Bool))
+  (Bool Bool) Bool
+  (
+   ((conjunctions_equal list_1 list_2)
+    (eo::and (conjunction_contains_conjunction list_1 list_2)
+             (conjunction_contains_conjunction list_2 list_1)))
+  )
+)
+
+; program: check_distinct_elim
+; args:
+; - conclusion Bool: The conclusion give to the distinct_elim rule.
+; return:
+; A Boolean indicating if the given "conclusion" has the shape
+; (distinct 𝑡1 … 𝑡𝑛) ≈ ⋀ 𝑡𝑖 ≈/≈ 𝑡𝑗.
+(program check_distinct_elim ((A Type) (hd A) (inequalities Bool) (conjunctions Bool))
+  (Bool) Bool
+  (; TODO: assuming that inequalities come first
+   ((check_distinct_elim (@cl (= inequalities conjunctions)))
+    (conjunctions_equal (build_distinct_list inequalities)
+                        conjunctions))
 
    ; Only one proposition
    ((check_distinct_elim (@cl (= (distinct hd) true))) true)
@@ -1803,11 +1876,11 @@
 
 ; rule: distinct_elim
 ; implements: TODO?
-; premises:
-; - distinct_elim nil:
-; args:
-; requires:
-; conclusion:
+; requires: >
+;   Requires for "conclusion" to be of the shape
+;   (distinct 𝑡1 … 𝑡𝑛) ≈ ⋀ 𝑡𝑖 ≈/≈ 𝑡𝑗.
+; conclusion-given: >
+;   Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule distinct_elim ()
   :requires (((check_distinct_elim eo::conclusion) true))
   :conclusion-given

@@ -36,19 +36,27 @@
 ; - list A: An f-list.
 ; return:
 ; A boolean indicating if "elem" appears in f-list "list".
-(program f_list_contains_elem ((A Type) (f (-> A A A)) (elem A) 
-                               (hd A) (tl A :list))
+(program f_list_contains_elem ((A Type) (f (-> A A A))
+                               (elem A) (hd A) (tl A :list))
   ((-> A A A) A A) Bool
   (
-   ((f_list_contains_elem f elem (f elem tl)) true)
+   ((f_list_contains_elem f elem (f elem tl))
 
-   ;; { head of list is not phi}
-   ((f_list_contains_elem f elem (f hd tl)) (f_list_contains_elem f elem tl))
+    true)
 
-   ((f_list_contains_elem f elem elem) true)
+   ; { hd =/= elem}
+   ((f_list_contains_elem f elem (f hd tl))
 
-   ;; { hd != elem}
-   ((f_list_contains_elem f elem hd) false)
+    (f_list_contains_elem f elem tl))
+
+   ; { elem is not an f-list}
+   ((f_list_contains_elem f elem elem)
+
+    true)
+   
+   ((f_list_contains_elem f elem hd)
+
+    false)
   )
 )
 
@@ -59,7 +67,7 @@
 ; - list_2 A: An f-list.
 ; return:
 ; A boolean indicating if the elements from list_1 also appear in list_2.
-(program f_list_contains_f_list ((A Type) (f (-> A A A)) (elem A) 
+(program f_list_contains_f_list ((A Type) (f (-> A A A))
                                  (hd A) (tl A :list)
                                  (f_list_2 A))
   ((-> A A A) A A) Bool
@@ -78,7 +86,7 @@
   )
 )
 
-; program: f_list_contains_elem
+; program: f_list_equal
 ; args:
 ; - f (-> A A A): Operator used to build the f-list.
 ; - list_1 A: An f-list.
@@ -86,7 +94,8 @@
 ; return: >
 ; A boolean indicating if the operands from list_1 and list_2 are the 
 ; same, regardless of the order.
-(program f_list_equal ((A Type) (f (-> A A A)) (f_list_1 A) (f_list_2 A))
+(program f_list_equal ((A Type) (f (-> A A A))
+                       (f_list_1 A) (f_list_2 A))
   ((-> A A A) A A) Bool
   (
    ((f_list_equal f f_list_1 f_list_2)
@@ -165,50 +174,6 @@
    )
 )
 
-;; ; program: cl_contains_prop
-;; ; args:
-;; ; - phi Bool: A proposition.
-;; ; - clause Bool: A clause, built with @cl.
-;; ; return: A boolean indicating if "phi" is a disjunct from "clause".
-;; (program cl_contains_prop ((phi Bool) (hd Bool) (tl Bool :list))
-;;   (Bool Bool) Bool
-;;   (
-;;    ((cl_contains_prop phi (@cl phi tl)) true)
-
-;;    ;; { head of list is not phi}
-;;    ((cl_contains_prop phi (@cl hd tl)) (cl_contains_prop phi tl))
-
-;;    ((cl_contains_prop phi phi) true)
-
-;;    ;; { hd != phi}
-;;    ((cl_contains_prop phi hd) false)
-;;   )
-;; )
-
-;; ; program: cl_contains_cl
-;; ; args:
-;; ; - cl_1 Bool: A clause, built with @cl.
-;; ; - cl_2 Bool: A clause, built with @cl.
-;; ; return: >
-;; ;   A boolean indicating if cl_1's disjuncts are also present
-;; ;   in cl_2
-;; (program cl_contains_cl ((hd Bool) (tl Bool :list) (cl_2 Bool))
-;;   (Bool Bool) Bool
-;;   (
-;;    ((cl_contains_cl (@cl hd tl) cl_2)
-;;     ;; TODO: I need some way to build boolean values
-;;     ;; combining other boolean values, but I would like
-;;     ;; to avoid built-in operators.
-;;     (eo::and (cl_contains_prop hd cl_2)
-;;              (cl_contains_cl tl cl_2)))
-
- 
-;;    ;; { cl_1 is not a clause built with @cl }
-;;    ((cl_contains_cl hd cl_2)
-;;     (cl_contains_prop hd cl_2))
-;;   )
-;; )
-
 ; program: cl_equal
 ; args:
 ; - cl_1 Bool: A clause, built with @cl.
@@ -220,8 +185,6 @@
   (
    ((cl_equal cl_1 cl_2)
     (f_list_equal @cl cl_1 cl_2))
-    ;; (eo::and (cl_contains_cl cl_1 cl_2)
-    ;;          (cl_contains_cl cl_2 cl_1)))
   )
 )
 
