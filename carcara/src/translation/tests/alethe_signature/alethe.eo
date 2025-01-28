@@ -41,10 +41,9 @@
     ((check_not_not (@cl phi (not (not (not phi))))) true)
     )
 )
-(declare-rule not_not ((CL Bool))
-  :args (CL)
-  :requires (((check_not_not CL) true))
-  :conclusion CL
+(declare-rule not_not ()
+  :requires (((check_not_not eo::conclusion) true))
+  :conclusion-given
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -358,54 +357,64 @@
   :conclusion-given
 )
 
-(declare-rule eq_reflexive ((T Type) (t T))
-  :args ((@cl (= t t)))
-  :conclusion (@cl (= t t))
+;TODO
+(program check_eq_reflexive ((conclusion Bool))
+  (Bool) Bool
+  (
+   ((check_eq_reflexive conclusion) true)
+  )
+)
+; TODO: to preserve previous attempt
+;; (declare-rule eq_reflexive ((T Type) (t T))
+;;   :args ((@cl (= t t)))
+;;   :conclusion (@cl (= t t))
+;; )
+
+(declare-rule eq_reflexive ()
+  :requires (((check_eq_reflexive eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
-(program check_eq_transitive ((CL Bool))
+(program check_eq_transitive ((conclusion Bool))
   (Bool) Bool
   (
-   ((check_eq_transitive CL) true)
+   ((check_eq_transitive conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule eq_transitive ((CL Bool))
-  :args (CL)
-  :requires (((check_eq_transitive CL) true))
-  :conclusion CL
+(declare-rule eq_transitive ()
+  :requires (((check_eq_transitive eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
-(program check_eq_congruent ((CL Bool))
+(program check_eq_congruent ((conclusion Bool))
   (Bool) Bool
   (
-   ((check_eq_congruent CL) true)
+   ((check_eq_congruent conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule eq_congruent ((CL Bool))
-  :args (CL)
-  :requires (((check_eq_congruent CL) true))
-  :conclusion CL
+(declare-rule eq_congruent ()
+  :requires (((check_eq_congruent eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
-(program check_eq_congruent_pred ((CL Bool))
+(program check_eq_congruent_pred ((conclusion Bool))
   (Bool) Bool
   (
-   ((check_eq_congruent_pred CL) true)
+   ((check_eq_congruent_pred conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule eq_congruent_pred ((CL Bool))
-  :args (CL)
-  :requires (((check_eq_congruent_pred CL) true))
-  :conclusion CL
+(declare-rule eq_congruent_pred ()
+  :requires (((check_eq_congruent_pred eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
@@ -1500,18 +1509,17 @@
 )
 
 ;TODO
-(program check_bool_simplify ((l Bool) (r Bool))
-  (Bool Bool) Bool
+(program check_bool_simplify ((conclusion Bool))
+  (Bool) Bool
   (
-   ((check_bool_simplify l r) true)
+   ((check_bool_simplify conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule bool_simplify ((l Bool) (r Bool))
-  :args ((@cl (= l r)))
-  :requires (((check_bool_simplify l r) true))
-  :conclusion (@cl (= l r))
+(declare-rule bool_simplify ()
+  :requires (((check_bool_simplify eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
@@ -1920,35 +1928,6 @@
 ;;;;;;;;;;;;;;;;;;;
 ; Rule 95: nary_elim
 ;;;;;;;;;;;;;;;;;;;
-;; ; program: verify_right_assoc_app
-;; ; args:
-;; ; - conclusion Bool: >
-;; ;   Conclusion given to rule nary_elim. It must be built with @cl.
-;; ; return:
-;; ;   - A boolean indicating if conclusion has one of the following forms:
-;; ;     ○ 𝑡𝑖 ≈ (… ((𝑡1 ∘𝑡2) ∘𝑡3) ∘⋯𝑡𝑛) (for a left assoc. operator ∘)
-;; ;     ○ 𝑡𝑖 ≈ (𝑡1 ∘⋯∘(𝑡𝑛−2 ∘(𝑡𝑛−1 ∘𝑡𝑛) … ) (for a right assoc. operator ∘)
-;; ;     ○ 𝑡𝑖 ≈ (𝑡1 ∘𝑡2) ∧(𝑡2 ∘𝑡3) ∧⋯∧ (𝑡𝑛−1 ∘𝑡𝑛) (for a chainable operator ∘)
-;; ;   - ∘ cannot be ∧ or ∨.
-;; (program verify_right_assoc_app ((A Type) (B Type) (op (-> A A B))
-;;                                  (elem_1 A) (elem_2 A) 
-;;                                  (tl_1 A :list) (tl_2 A :list))
-;;   ((-> A A B) B B) Bool
-;;   (; TODO: do we have reflection mechanisms, useful to inspect properties
-;;    ; of each operator, and define this program in a generic way?
-;;    ((verify_right_assoc_app op (op elem_1 elem_2) (op elem_1 elem_2))
-
-;;     true)
-
-;;    ((verify_right_assoc_app op (op elem_1 tl_1) (op elem_1 tl_2))
-
-;;     (verify_right_assoc_app op (op tl_1) (op tl_2)))
-
-;;    ((verify_right_assoc_app _ _ _)
-
-;;     false)
-;;   )
-;; )
 
 ; program: check_nary_elim
 ; args:
@@ -2007,18 +1986,17 @@
 )
 
 ;TODO
-(program check_ite_intro ((l Bool) (r Bool))
-  (Bool Bool) Bool
+(program check_ite_intro ((conclusion Bool))
+  (Bool) Bool
   (
-   ((check_ite_intro l r) true)
+   ((check_ite_intro conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule ite_intro ((l Bool) (r Bool))
-  :args ((@cl (= l r)))
-  :requires (((check_ite_intro l r) true))
-  :conclusion (@cl (= l r))
+(declare-rule ite_intro ()
+  :requires (((check_ite_intro eo::conclusion) true))
+  :conclusion-given
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
