@@ -1917,19 +1917,77 @@
   :conclusion-given
 )
 
-;TODO
-(program check_nary_elim ((l Bool) (r Bool))
-  (Bool Bool) Bool
-  (
-   ((check_nary_elim l r) true)
+;;;;;;;;;;;;;;;;;;;
+; Rule 95: nary_elim
+;;;;;;;;;;;;;;;;;;;
+;; ; program: verify_right_assoc_app
+;; ; args:
+;; ; - conclusion Bool: >
+;; ;   Conclusion given to rule nary_elim. It must be built with @cl.
+;; ; return:
+;; ;   - A boolean indicating if conclusion has one of the following forms:
+;; ;     ○ 𝑡𝑖 ≈ (… ((𝑡1 ∘𝑡2) ∘𝑡3) ∘⋯𝑡𝑛) (for a left assoc. operator ∘)
+;; ;     ○ 𝑡𝑖 ≈ (𝑡1 ∘⋯∘(𝑡𝑛−2 ∘(𝑡𝑛−1 ∘𝑡𝑛) … ) (for a right assoc. operator ∘)
+;; ;     ○ 𝑡𝑖 ≈ (𝑡1 ∘𝑡2) ∧(𝑡2 ∘𝑡3) ∧⋯∧ (𝑡𝑛−1 ∘𝑡𝑛) (for a chainable operator ∘)
+;; ;   - ∘ cannot be ∧ or ∨.
+;; (program verify_right_assoc_app ((A Type) (B Type) (op (-> A A B))
+;;                                  (elem_1 A) (elem_2 A) 
+;;                                  (tl_1 A :list) (tl_2 A :list))
+;;   ((-> A A B) B B) Bool
+;;   (; TODO: do we have reflection mechanisms, useful to inspect properties
+;;    ; of each operator, and define this program in a generic way?
+;;    ((verify_right_assoc_app op (op elem_1 elem_2) (op elem_1 elem_2))
+
+;;     true)
+
+;;    ((verify_right_assoc_app op (op elem_1 tl_1) (op elem_1 tl_2))
+
+;;     (verify_right_assoc_app op (op tl_1) (op tl_2)))
+
+;;    ((verify_right_assoc_app _ _ _)
+
+;;     false)
+;;   )
+;; )
+
+; program: check_nary_elim
+; args:
+; - conclusion Bool: >
+;   Conclusion given to rule nary_elim. It must be built with @cl.
+; return:
+;   - A boolean indicating if conclusion has one of the following forms:
+;     ○ 𝑡𝑖 ≈ (… ((𝑡1 ∘𝑡2) ∘𝑡3) ∘⋯𝑡𝑛) (for a left assoc. operator ∘)
+;     ○ 𝑡𝑖 ≈ (𝑡1 ∘⋯∘(𝑡𝑛−2 ∘(𝑡𝑛−1 ∘𝑡𝑛) … ) (for a right assoc. operator ∘)
+;     ○ 𝑡𝑖 ≈ (𝑡1 ∘𝑡2) ∧(𝑡2 ∘𝑡3) ∧⋯∧ (𝑡𝑛−1 ∘𝑡𝑛) (for a chainable operator ∘)
+;   - ∘ cannot be ∧ or ∨.
+(program check_nary_elim ((A Type) (hd A) (tl A :list))
+  (Bool) Bool
+  (; TODO: check that op is not /\ nor \/
+   ; TODO: do we have reflection mechanisms, useful to inspect properties
+   ; of each operator, and define this program in a generic way?
+   ((check_nary_elim (@cl (= (=> hd tl) (=> hd tl))))
+    ; right-assoc operator
+    ; We leverage the desugaring process, that turns both lists
+    ; into the folded application of the operator, already
+    ; associated to the right.
+    true
+    )
   )
 )
 
-;TRUST
-(declare-rule nary_elim ((l Bool) (r Bool))
-  :args ((@cl (= l r)))
-  :requires (((check_nary_elim l r) true))
-  :conclusion (@cl (= l r))
+; rule: nary_elim
+; implements: TODO?
+; requires: >
+;   - The conclusion should have one of the following forms:
+;     ○ 𝑡𝑖 ≈ (… ((𝑡1 ∘𝑡2) ∘𝑡3) ∘⋯𝑡𝑛) (for a left assoc. operator ∘)
+;     ○ 𝑡𝑖 ≈ (𝑡1 ∘⋯∘(𝑡𝑛−2 ∘(𝑡𝑛−1 ∘𝑡𝑛) … ) (for a right assoc. operator ∘)
+;     ○ 𝑡𝑖 ≈ (𝑡1 ∘𝑡2) ∧(𝑡2 ∘𝑡3) ∧⋯∧ (𝑡𝑛−1 ∘𝑡𝑛) (for a chainable operator ∘)
+;    - ∘ cannot be ∧ or ∨.
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
+(declare-rule nary_elim ()
+  :requires (((check_nary_elim eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
