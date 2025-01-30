@@ -34,6 +34,16 @@
   :conclusion-given
 )
 
+;;;;;;;;;;;;;;;;;;;;;;;
+; Rule 5: not_not
+;;;;;;;;;;;;;;;;;;;;;;;
+
+; program: check_not_not
+; args:
+; - conclusion Bool: Conclusion given to rule not_not.
+; return: >
+;   A boolean indicating if conclusion is equivalent to the proposition
+;   ¬(¬¬𝜑), 𝜑, for some proposition 𝜑
 (program check_not_not ((phi Bool))
     (Bool) Bool
     (
@@ -41,6 +51,14 @@
     ((check_not_not (@cl phi (not (not (not phi))))) true)
     )
 )
+
+; rule: not_not
+; implements: TODO?
+; requires: >
+;   The conclusion should be equivalent to the proposition
+;   ¬(¬¬𝜑), 𝜑, for some proposition 𝜑
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule not_not ()
   :requires (((check_not_not eo::conclusion) true))
   :conclusion-given
@@ -417,19 +435,34 @@
   :conclusion-given
 )
 
+;TODO: to preserve previous def
+;; 
+;; (program check_qnt_cnf ((phi Bool) (phiP Bool) (xs @VarList) (xsP @VarList))
+;;   (@VarList Bool @VarList Bool) Bool
+;;   (
+;;    ((check_qnt_cnf xs phi xsP phiP) true)
+;;   )
+;; )
+
+;; ;TRUST
+;; (declare-rule qnt_cnf ((phi Bool) (phiP Bool) (xs @VarList) (xsP @VarList))
+;;   :args ((@cl (or (not (forall xs phi)) (forall xsP phiP))))
+;;   :requires (((check_qnt_cnf xs phi xsP phiP) true))
+;;   :conclusion (@cl (or (not (forall xs phi)) (forall xsP phiP)))
+;; )
+
 ;TODO
-(program check_qnt_cnf ((phi Bool) (phiP Bool) (xs @VarList) (xsP @VarList))
-  (@VarList Bool @VarList Bool) Bool
+(program check_qnt_cnf ((conclusion Bool))
+  (Bool) Bool
   (
-   ((check_qnt_cnf xs phi xsP phiP) true)
+   ((check_qnt_cnf conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule qnt_cnf ((phi Bool) (phiP Bool) (xs @VarList) (xsP @VarList))
-  :args ((@cl (or (not (forall xs phi)) (forall xsP phiP))))
-  :requires (((check_qnt_cnf xs phi xsP phiP) true))
-  :conclusion (@cl (or (not (forall xs phi)) (forall xsP phiP)))
+(declare-rule qnt_cnf ()
+  :requires (((check_qnt_cnf eo::conclusion) true))
+  :conclusion-given
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -546,9 +579,15 @@
 ;   with @cl.
 (program check_or ((premise Bool) (conclusion Bool))
   (Bool Bool) Bool
-  (
-   ((check_or premise conclusion) 
-    (cl_equal (convert_or_to_cl (from_cl premise)) conclusion))
+  (((check_or (@cl premise) conclusion)    
+    ;; (convert_or_to_cl premise)
+    (cl_equal (convert_or_to_cl premise) 
+               conclusion)
+    )
+
+   ; { premise is not built with @cl } 
+   ((check_or premise conclusion)
+    (cl_equal (convert_or_to_cl premise) conclusion))
   )
 )
 
@@ -950,19 +989,37 @@
   :conclusion-given
 )
 
-;TODO
-(program check_or_pos ((CL Bool))
+;;;;;;;;;;;;;;;;;;
+; Rule 50: or_pos
+;;;;;;;;;;;;;;;;;;
+
+; program: check_or_pos
+; args:
+; - conclusion Bool: >
+;   Conclusion given to rule or_pos. It is expected to be built with @cl.
+; return: >
+;   A boolean indicating if conclusion is of the form
+;   ¬(𝜑1 ∨⋯∨𝜑𝑛), 𝜑1, … , 𝜑𝑛, for some given propositions 𝜑1, ..., 𝜑𝑛.
+(program check_or_pos ((left_disjunct Bool) (right_disjunct Bool :list))
   (Bool) Bool
   (
-   ((check_or_pos CL) true)
+   ((check_or_pos (@cl (not left_disjunct) right_disjunct))
+    (cl_equal (convert_or_to_cl left_disjunct)
+              (@cl right_disjunct))
+    )
   )
 )
 
-;TRUST
-(declare-rule or_pos ((CL Bool))
-  :args (CL)
-  :requires (((check_or_pos CL) true))
-  :conclusion CL
+; rule: or_pos
+; implements: TODO?
+; requires: >
+;   For the conclusion to be of the form
+;   ¬(𝜑1 ∨⋯∨𝜑𝑛), 𝜑1, … , 𝜑𝑛, for some given propositions 𝜑1, ..., 𝜑𝑛.
+; conclusion-given: >
+;  Only the "requires" predicate checks if a proper conclusion is given.
+(declare-rule or_pos ()
+  :requires (((check_or_pos eo::conclusion) true))
+  :conclusion-given
 )
 
 ;;;;;;;;;;;;;;;;;;
@@ -1451,33 +1508,31 @@
 )
 
 ;TODO
-(program check_or_simplify ((l Bool) (r Bool))
-  (Bool Bool) Bool
+(program check_or_simplify ((conclusion Bool))
+  (Bool) Bool
   (
-   ((check_or_simplify l r) true)
+   ((check_or_simplify conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule or_simplify ((l Bool) (r Bool))
-  :args ((@cl (= l r)))
-  :requires (((check_or_simplify l r) true))
-  :conclusion (@cl (= l r))
+(declare-rule or_simplify ()
+  :requires (((check_or_simplify eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
-(program check_not_simplify ((l Bool) (r Bool))
-  (Bool Bool) Bool
+(program check_not_simplify ((conclusion Bool))
+  (Bool) Bool
   (
-   ((check_not_simplify l r) true)
+   ((check_not_simplify conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule not_simplify ((l Bool) (r Bool))
-  :args ((@cl (= l r)))
-  :requires (((check_not_simplify l r) true))
-  :conclusion (@cl (= l r))
+(declare-rule not_simplify ()
+  :requires (((check_not_simplify eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
@@ -1568,65 +1623,69 @@
 )
 
 ;TODO
-(program check_onepoint ((ctx Bool) (T Type) (l T) (r T) (l1 T) (r1 T))
-  (Bool T T T T) Bool
+(program check_onepoint ((conclusion Bool))
+  (Bool) Bool
   (
-   ((check_onepoint ctx l r l1 r1) true)
+   ((check_onepoint conclusion) true)
   )
 )
+;; (program check_onepoint ((ctx Bool) (T Type) (l T) (r T) (l1 T) (r1 T))
+;;   (Bool T T T T) Bool
+;;   (
+;;    ((check_onepoint ctx l r l1 r1) true)
+;;   )
+;; )
 
 ;TRUST
 (declare-rule onepoint ((ctx Bool) (old_ctx Bool) (T Type) (l T) (r T) (l1 T) (r1 T))
-  :assumption ctx
-  :premises (old_ctx (@cl (= l1 r1)))
-  :args ((@cl (= l r)))
-  :requires (((context_extended ctx old_ctx) true) ((check_onepoint ctx l r l1 r1) true))
-  :conclusion (@cl (= l r))
+  ;; :assumption ctx
+  ;; :premises (old_ctx (@cl (= l1 r1)))
+  ;; :args ((@cl (= l r)))
+  ;; :requires (((context_extended ctx old_ctx) true) ((check_onepoint ctx l r l1 r1) true))
+  :requires (((check_onepoint eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
-(program check_qnt_join ((l Bool) (r Bool))
-  (Bool Bool) Bool
+(program check_qnt_join ((conclusion Bool))
+  (Bool) Bool
   (
-   ((check_qnt_join l r) true)
+   ((check_qnt_join conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule qnt_join ((l Bool) (r Bool))
-  :args ((@cl (= l r)))
-  :requires (((check_qnt_join l r) true))
-  :conclusion (@cl (= l r))
+(declare-rule qnt_join ()
+  :requires (((check_qnt_join eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
-(program check_qnt_rm_unused ((l Bool) (r Bool))
-  (Bool Bool) Bool
+(program check_qnt_rm_unused ((conclusion Bool))
+  (Bool) Bool
   (
-   ((check_qnt_rm_unused l r) true)
+   ((check_qnt_rm_unused conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule qnt_rm_unused ((l Bool) (r Bool))
-  :args ((@cl (= l r)))
-  :requires (((check_qnt_rm_unused l r) true))
-  :conclusion (@cl (= l r))
+(declare-rule qnt_rm_unused ()
+  :requires (((check_qnt_rm_unused eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
-(program check_eq_simplify ((l Bool) (r Bool))
-  (Bool Bool) Bool
+(program check_eq_simplify ((conclusion Bool))
+  (Bool) Bool
   (
-   ((check_eq_simplify l r) true)
+   ((check_eq_simplify conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule eq_simplify ((l Bool) (r Bool))
-  :args ((@cl (= l r)))
-  :requires (((check_eq_simplify l r) true))
-  :conclusion (@cl (= l r))
+(declare-rule eq_simplify ()
+  :requires (((check_eq_simplify eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO

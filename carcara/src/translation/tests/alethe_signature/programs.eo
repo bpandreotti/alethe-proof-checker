@@ -16,7 +16,7 @@
 ; - index Int: >
 ;   An integer, from 0 to the number of parameters - 1 in (f t1 ... tn) 
 ;   (i.e., "list)
-; return: The parameter number "index" - 1, from (f t1 ... tn) (i.e., "list")
+; return: The parameter number "index", from (f t1 ... tn) (i.e., "list")
 (program f_list_index ((A Type) (f (-> A A A)) (hd A) (tail A :list) (index Int))
   ((-> A A A) A Int) A
   (
@@ -111,21 +111,25 @@
 ; - flist A: An f-list.
 ; return: >
 ; Returns an f-list, with first operand "elem", followed by operands of flist_2.
-
-(program f_list_cons ((A Type) (f (-> A A A))
-                      (elem A)
-                      (hd_2 A) (tl_2 A :list))
-  ((-> A A A) A A) A
-  (
-   ((f_list_cons f elem (f hd_2 tl_2))
-
-    (f elem (f hd_2 tl_2)))
-   
-   ((f_list_cons f elem hd_2)
-
-    (f elem hd_2))
-  )
+(define f_list_cons ((A Type :implicit) (f (-> A A A)) (elem A)
+                   (tail A :list))
+    (f elem tail)
 )
+
+;; (program f_list_cons ((A Type :implicit) (f (-> A A A))
+;;                       (elem A)
+;;                       (hd_2 A) (tl_2 A :list))
+;;   ((-> A A A) A A) A
+;;   (
+;;    ((f_list_cons f elem (f hd_2 tl_2))
+
+;;     (f elem (f hd_2 tl_2)))
+   
+;;    ((f_list_cons f elem hd_2)
+
+;;     (f elem hd_2))
+;;   )
+;; )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CLAUSES
@@ -195,15 +199,13 @@
 ; - accum Bool : Partial result accumulator
 ; return: >
 ;   A clause equivalent to "or_clause", built exclusively with @cl.
-(program convert_or_to_cl ((or_clause Bool) (disjunct_1 Bool) (disjunct_2 Bool))
+(program convert_or_to_cl ((or_clause Bool) (disjunct_1 Bool) (disjunct_2 Bool :list))
   (Bool) Bool
   (((convert_or_to_cl (or disjunct_1 disjunct_2))
-    (@cl disjunct_1 (from_cl (convert_or_to_cl disjunct_2))))
-
+    (f_list_cons @cl disjunct_1 (convert_or_to_cl disjunct_2)))
    ; { disjunct_1 is not built with "or" }
    ((convert_or_to_cl disjunct_1)
-    (@cl disjunct_1))
-   )
+    disjunct_1))
 )
 
 ; program: transform_not_and
