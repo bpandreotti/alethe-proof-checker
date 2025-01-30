@@ -537,8 +537,33 @@ impl EunoiaTranslator {
                         ],
                     ),
 
+                    Binder::Choice => {
+                        let translated_bindings = self.translate_binding_list(binding_list);
+                        let choice_var: EunoiaTerm;
+                        // There should be just one defined variable.
+                        match &translated_bindings {
+                            EunoiaTerm::List(list) => {
+                                assert!(list.len() == 1);
+                                match &list[0] {
+                                    EunoiaTerm::Var(var_name, ..) => {
+                                        choice_var = EunoiaTerm::Id(var_name.to_string());
+                                    }
+
+                                    _ => panic!(),
+                                }
+                            }
+
+                            _ => panic!(),
+                        };
+
+                        EunoiaTerm::App(
+                            self.alethe_signature.choice_binder.clone(),
+                            vec![translated_bindings, choice_var, self.translate_term(scope)],
+                        )
+                    }
+
                     // TODO: complete
-                    _ => EunoiaTerm::App(
+                    Binder::Lambda => EunoiaTerm::App(
                         self.alethe_signature.exists_binder.clone(),
                         vec![
                             self.translate_binding_list(binding_list),

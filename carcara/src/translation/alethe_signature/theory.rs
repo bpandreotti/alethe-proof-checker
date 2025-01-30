@@ -50,6 +50,7 @@ pub struct AletheTheory {
     pub let_binder: Symbol,
     pub forall_binder: Symbol,
     pub exists_binder: Symbol,
+    pub choice_binder: Symbol,
 
     // VarList constructors
     pub varlist_nil: Symbol,
@@ -98,6 +99,7 @@ impl AletheTheory {
             let_binder: String::from("@let"),
             forall_binder: String::from("forall"),
             exists_binder: String::from("exists"),
+            choice_binder: String::from("choice"),
 
             // VarList constructors
             varlist_nil: String::from("@varlist.nil"),
