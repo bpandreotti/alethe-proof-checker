@@ -256,21 +256,37 @@
   :conclusion-given
 )
 
-;TODO
-(program check_sko_ex ((ctx Bool) (T Type) (l T) (r T) (l1 T) (r1 T))
-  (Bool T T T T) Bool
+;;;;;;;;;;;;;;;;;;;;;;;
+; Rule 19: sko_ex
+;;;;;;;;;;;;;;;;;;;;;;;
+; TODO: to preserve previous def.
+;; (program check_sko_ex ((ctx Bool) (T Type) (l T) (r T) (l1 T) (r1 T))
+;;   (Bool T T T T) Bool
+;;   (
+;;    ((check_sko_ex ctx l r l1 r1) true)
+;;   )
+;; )
+
+;; ;TRUST
+;; (declare-rule sko_ex ((ctx Bool) (old_ctx Bool) (T Type) (l T) (r T) (l1 T) (r1 T))
+;;   :assumption ctx
+;;   :premises (old_ctx (@cl (= l1 r1)))
+;;   :args ((@cl (= l r)))
+;;   :requires (((context_extended ctx old_ctx) true) ((check_sko_ex ctx l r l1 r1) true))
+;;   :conclusion (@cl (= l r))
+;; )
+
+(program check_sko_ex ((conclusion Bool))
+  (Bool) Bool
   (
-   ((check_sko_ex ctx l r l1 r1) true)
+   ((check_sko_ex conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule sko_ex ((ctx Bool) (old_ctx Bool) (T Type) (l T) (r T) (l1 T) (r1 T))
-  :assumption ctx
-  :premises (old_ctx (@cl (= l1 r1)))
-  :args ((@cl (= l r)))
-  :requires (((context_extended ctx old_ctx) true) ((check_sko_ex ctx l r l1 r1) true))
-  :conclusion (@cl (= l r))
+(declare-rule sko_ex ()
+  :requires (((check_sko_ex eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
@@ -1478,18 +1494,17 @@
 )
 
 ;TODO
-(program check_connective_dev ((l Bool) (r Bool))
-  (Bool Bool) Bool
+(program check_connective_def ((conclusion Bool))
+  (Bool) Bool
   (
-   ((check_connective_dev l r) true)
+   ((check_connective_def conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule connective_def ((l Bool) (r Bool))
-  :args ((@cl (= l r)))
-  :requires (((check_connective_dev l r) true))
-  :conclusion (@cl (= l r))
+(declare-rule connective_def ((conclusion Bool))
+  :requires (((check_connective_def eo::conclusion) true))
+  :conclusion-given
 )
 
 ;TODO
