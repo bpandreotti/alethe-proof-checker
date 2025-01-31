@@ -144,19 +144,25 @@ impl EunoiaTranslator {
                         self.pre_ord_subproofs.push(Vec::new());
                     }
 
-                    // { self.pre_ord_subproofs.len() >= *depth }
+                    // { self.pre_ord_subproofs.len() == *depth }
 
                     self.pre_ord_subproofs[*depth - 1].push((*node).deref().clone());
                 } else {
+                    // TODO: abstract this last step into some procedure; it
+                    // is repeated for each ProofNode case.
+
                     // { *depth <= self.previous_depth }
+                    // We jumped out of a subproof.
                     if *depth == 0 {
-                        // This is not a node from a subproof, we can safely push it
-                        // into pre_ord_proof_node.
+                        // This is not a node from another subproof, we can
+                        // safely push it into pre_ord_proof_node.
                         self.pre_ord_proof.push((*node).deref().clone());
                     } else {
                         // { *depth > 0 }
-                        // We are still within a subproof
+                        // We are still within some subproof
                         assert!(self.pre_ord_subproofs.len() >= *depth - 1);
+                        // A node of depth "depth", always belong to
+                        // subproof "depth" - 1.
                         self.pre_ord_subproofs[*depth - 1].push((*node).deref().clone());
                     }
                 }
@@ -214,7 +220,8 @@ impl EunoiaTranslator {
                         // Pop the subproof being closed
                         self.pre_ord_subproofs.pop();
 
-                        self.previous_depth = *depth;
+                        // We jump out of the subproof.
+                        self.previous_depth = *depth - 1;
                     }
 
                     _ => {
@@ -228,7 +235,7 @@ impl EunoiaTranslator {
 
     /// For a given "nesting" level (some number <= `self.contexts_opened`),
     /// returns the index of the last surrounding context actually introduced
-    /// within the proof certificate, with an Eunoia definition.
+    /// within the proof certificate.
     /// PRE: { 0 < `nesting_level` < `self.contexts_opened`}
     fn get_last_introduced_context(&self, nesting_level: usize) -> usize {
         let mut last_scope: usize = 0;
