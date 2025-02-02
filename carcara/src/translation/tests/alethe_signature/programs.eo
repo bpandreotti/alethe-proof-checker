@@ -228,6 +228,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; implication
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ; program: rewrite_implication
 ; args:
 ; - implication Bool: >
@@ -270,5 +271,51 @@
           ((rewrite_implication (=> (not phi_1) (not phi_1)))
           
           (not phi_1))
+          )
+)
+
+; program: rewrite_equivalence
+; args:
+; - equivalence Bool: >
+;   An equivalence over which we want to apply simplifying rewrites.
+; return:
+;   A proposition that is equivalent to "equivalence", but that is
+;   not built with =.
+(program rewrite_equivalence ((phi_1 Bool) (phi_2 Bool))
+         (Bool) Bool
+         (; We apply semantics preserving rewrites.
+          ((rewrite_equivalence (= (not phi_1) (not phi_2)))
+          
+          (rewrite_equivalence (= phi_2 phi_1)))
+
+          
+          ((rewrite_equivalence (= phi_1 phi_1))
+          
+          true)
+
+          ((rewrite_equivalence (= phi_1 (not phi_1)))
+          
+          false)
+
+          ((rewrite_equivalence (= (not phi_1) phi_1))
+          
+          false)
+
+          ((rewrite_equivalence (= true phi_1))
+          
+          phi_1)
+
+          ((rewrite_equivalence (= phi_1 true))
+          
+          phi_1)
+
+          ((rewrite_equivalence (= phi_1 false))
+          
+          (not phi_1))
+
+          ((rewrite_equivalence (= false phi_1))
+          
+          (not phi_1))
+
           )
 )

@@ -1554,6 +1554,13 @@
 ; Rule 75: implies_simplify
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; program: check_implies_simplify
+; args:
+; - conclusion Bool: Conclusion provided to rule implies_simplify.
+; return: >
+;   A boolean indicating if conclusion has the form 𝜑1 → 𝜑2 ≈ 𝜓, where 𝜓
+;   results from the application of equivalence preserving transformations, 
+;   as specified in "rewrite_implication".
 (program check_implies_simplify ((phi_1 Bool) (phi_2 Bool) (psy Bool))
   (Bool) Bool
   (
@@ -1564,28 +1571,47 @@
   )
 )
 
-
 ; rule: implies_simplify
 ; implements: TODO?
 ; requires: >
-;   For the conclusion to be of the form 𝜑1 → 𝜑2 ≈ 𝜓, where 𝜓 is
-;   equivalent to 𝜑1 → 𝜑2 but results from the application of equivalence
+;   For the conclusion to be of the form 𝜑1 → 𝜑2 ≈ 𝜓, where 𝜓 
+;   results from the application of equivalence
 ;   preserving transformations, as specified in "rewrite_implication".
-; conclusion:
+; conclusion-given: >
+;   Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule implies_simplify ()
   :requires (((check_implies_simplify eo::conclusion) true))
   :conclusion-given
 )
 
-;TODO
-(program check_equiv_simplify ((conclusion Bool))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Rule 76: equiv_simplify
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; program: check_equiv_simplify
+; args:
+; - conclusion Bool: Conclusion provided to rule equiv_simplify.
+; return: >
+;   A boolean indicating if conclusion has the form (𝜑1 ≈ 𝜑2) ≈ 𝜓, where 𝜓 
+;   results from the application of equivalence preserving transformations, 
+;   as specified in "rewrite_equivalence".
+(program check_equiv_simplify ((phi_1 Bool) (phi_2 Bool) (psy Bool))
   (Bool) Bool
   (
-   ((check_equiv_simplify conclusion) true)
+   ((check_equiv_simplify (@cl (= (= phi_1 phi_2) psy)))
+                            ; TODO: use proper comparison for props
+                            (cl_equal (@cl (rewrite_equivalence (= phi_1 phi_2)))
+                                      (@cl psy)))
   )
 )
 
-;TRUST
+; rule: equiv_simplify
+; implements: TODO?
+; requires: >
+;   For the conclusion to be of the form 𝜑1 → 𝜑2 ≈ 𝜓, where 𝜓
+;   results from the application of equivalence
+;   preserving transformations, as specified in "rewrite_equivalence".
+; conclusion-given: >
+;   Only the "requires" predicate checks if a proper conclusion is given.
 (declare-rule equiv_simplify ()
   :requires (((check_equiv_simplify eo::conclusion) true))
   :conclusion-given
