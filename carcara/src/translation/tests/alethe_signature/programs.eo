@@ -224,3 +224,51 @@
    ((de_morgan_not_and l) (@cl (not l)))
   )
 )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; implication
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; program: rewrite_implication
+; args:
+; - implication Bool: >
+;   An implication over which we want to apply simplifying rewrites.
+; return:
+;   A proposition that is equivalent to "implication", but that is
+;   not built with =>.
+(program rewrite_implication ((phi_1 Bool) (phi_2 Bool))
+         (Bool) Bool
+         (; We apply semantics preserving rewrites.
+          ((rewrite_implication (=> (not phi_1) (not phi_2)))
+          
+          (rewrite_implication (=> phi_2 phi_1)))
+
+          
+          ((rewrite_implication (=> false phi_1))
+          
+          true)
+
+          ((rewrite_implication (=> phi_1 true))
+          
+          true)
+
+          ((rewrite_implication (=> true phi_1))
+          
+          phi_1)
+
+          ((rewrite_implication (=> phi_1 false))
+          
+          (not phi_1))
+
+          ((rewrite_implication (=> phi_1 phi_1))
+          
+          true)
+
+          ((rewrite_implication (=> (not phi_1) phi_1))
+          
+          phi_1)
+
+          ((rewrite_implication (=> (not phi_1) (not phi_1)))
+          
+          (not phi_1))
+          )
+)

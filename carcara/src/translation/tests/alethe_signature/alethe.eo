@@ -1039,7 +1039,7 @@
 )
 
 ;;;;;;;;;;;;;;;;;;
-; Rule 51: and_neg
+; Rule 51: or_neg
 ;;;;;;;;;;;;;;;;;;
 
 ; program: check_or_neg
@@ -1550,15 +1550,28 @@
   :conclusion-given
 )
 
-;TODO
-(program check_implies_simplify ((CL Bool))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Rule 75: implies_simplify
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(program check_implies_simplify ((phi_1 Bool) (phi_2 Bool) (psy Bool))
   (Bool) Bool
   (
-   ((check_implies_simplify CL) true)
+   ((check_implies_simplify (@cl (= (=> phi_1 phi_2) psy)))
+                            ; TODO: use proper comparison for props
+                            (cl_equal (@cl (rewrite_implication (=> phi_1 phi_2)))
+                                      (@cl psy)))
   )
 )
 
-;TRUST
+
+; rule: implies_simplify
+; implements: TODO?
+; requires: >
+;   For the conclusion to be of the form 𝜑1 → 𝜑2 ≈ 𝜓, where 𝜓 is
+;   equivalent to 𝜑1 → 𝜑2 but results from the application of equivalence
+;   preserving transformations, as specified in "rewrite_implication".
+; conclusion:
 (declare-rule implies_simplify ()
   :requires (((check_implies_simplify eo::conclusion) true))
   :conclusion-given
