@@ -273,9 +273,9 @@ impl EunoiaTranslator {
                     premises,
                     args,
                     discharge,
-                    ..
+                    previous_step
                 }) => {
-                    self.translate_step(id, clause, rule, premises, args, discharge);
+                    self.translate_step(id, clause, rule, premises, args, discharge, previous_step);
 
                     // If within a subproof: save the index for future reference
                     self.local_steps[self.contexts_opened - 1].push(self.eunoia_proof.len() - 1);
@@ -518,13 +518,19 @@ impl EunoiaTranslator {
                 EunoiaTerm::App((*fun).to_string(), fun_params)
             }
 
-            Term::Let(binding_list, scope) => EunoiaTerm::App(
-                self.alethe_signature.let_binder.clone(),
-                vec![
-                    self.translate_binding_list(binding_list),
-                    self.translate_term(scope),
-                ],
-            ),
+            Term::Let(binding_list, scope) => {
+                let (translated_binding_list, translated_values) = 
+                    self.translate_let_binding_list(binding_list);
+
+                EunoiaTerm::HOApp(
+                    Box::new(EunoiaTerm::App(
+                        self.alethe_signature.let_binder.clone(),
+                        vec![translated_binding_list,
+                             self.translate_term(scope),
+                        ],
+                    )),
+                    translated_values)
+            },
 
             Term::Binder(binder, binding_list, scope) => {
                 match binder {
@@ -585,28 +591,59 @@ impl EunoiaTranslator {
         }
     }
 
+    /// Translates BindingList constructs, as used for binder terms forall, exists,
+    /// choice and lambda. The "let" binder uses the same construction but assigns to
+    /// it a different semantics. See translate_let_binding_list for its translation.
     fn translate_binding_list(&self, binding_list: &BindingList) -> EunoiaTerm {
         let mut ret = Vec::new();
 
         binding_list.iter().for_each(|sorted_var| {
             let (name, sort) = sorted_var;
-            if !self.variables_in_scope.is_empty()
-                && self.variables_in_scope[self.contexts_opened - 1].contains_key(name)
-            {
-                // TODO: abstract this into a procedure
-                ret.push(EunoiaTerm::Var(
-                    name.clone(),
-                    Box::new(self.variables_in_scope[self.contexts_opened - 1][name].clone()),
-                ));
-            } else {
-                ret.push(EunoiaTerm::Var(
+            ret.push(EunoiaTerm::Var(
                     name.clone(),
                     Box::new(self.translate_term(sort)),
-                ));
-            }
+            ));
+            // if !self.variables_in_scope.is_empty()
+            //     && self.variables_in_scope[self.contexts_opened - 1].contains_key(name)
+            // {
+            //     // TODO: abstract this into a procedure
+            //     ret.push(EunoiaTerm::Var(
+            //         name.clone(),
+            //         Box::new(self.variables_in_scope[self.contexts_opened - 1][name].clone()),
+            //     ));
+            // } else {
+            //     ret.push(EunoiaTerm::Var(
+            //         name.clone(),
+            //         Box::new(self.translate_term(sort)),
+            //     ));
+            // }
         });
 
         EunoiaTerm::List(ret)
+    }
+
+    /// Translates a BindingList as required by our definition of @let: it builds a list
+    /// of pairs (variable, type) for the binding occurrences, and returns this coupled with
+    /// the original list of actual values.
+    fn translate_let_binding_list(&self, binding_list: &BindingList) -> (EunoiaTerm, Vec<EunoiaTerm>) {
+        let mut binding_occ = Vec::new();
+        let mut values = Vec::new();
+
+        binding_list.iter().for_each(|sorted_var| {
+            let (name, value) = sorted_var;
+            let translated_value = self.translate_term(value);
+            // TODO: too much cloning...
+            binding_occ.push(EunoiaTerm::Var(
+                name.clone(),
+                // TODO: do not hardcode this
+                Box::new(EunoiaTerm::App("eo::typeof".to_string(), 
+                                         vec![translated_value.clone()]))
+            ));
+
+            values.push(translated_value.clone());
+        });
+
+        (EunoiaTerm::List(binding_occ), values)
     }
 
     fn translate_operator(&self, operator: Operator) -> Symbol {
@@ -774,10 +811,11 @@ impl EunoiaTranslator {
         premises: &[Rc<ProofNode>],
         args: &[Rc<Term>],
         discharge: &[Rc<ProofNode>],
+        previous_step: &Option<Rc<ProofNode>>
     ) {
         let mut alethe_premises: Vec<EunoiaTerm> = Vec::new();
 
-        // Add remaining premises, actually present in the original step command.
+        // Add premises actually present in the original step command.
         alethe_premises.extend(
             premises
                 .iter()
@@ -833,31 +871,51 @@ impl EunoiaTranslator {
 
             "let" => {
                 // TODO: do not hard-code this string
-                eunoia_arguments.push(EunoiaTerm::Id("context".to_owned()));
+                // eunoia_arguments.push(EunoiaTerm::Id("context".to_owned()));
 
-                // Extract lhs and rhs
-                let (lhs, rhs) = self.alethe_signature.extract_eq_lhs_rhs(&conclusion);
-                eunoia_arguments.push(lhs);
-                eunoia_arguments.push(rhs);
+                // // Extract lhs and rhs
+                // let (lhs, rhs) = self.alethe_signature.extract_eq_lhs_rhs(&conclusion);
+                // eunoia_arguments.push(lhs);
+                // eunoia_arguments.push(rhs);
 
-                // Include, as premises, previous steps from the actual subproof.
-                self.local_steps[self.contexts_opened - 1]
-                    .iter()
-                    .for_each(|index| {
-                        match &self.eunoia_proof[*index] {
-                            EunoiaCommand::Step { id, .. } => {
-                                alethe_premises.push(EunoiaTerm::Id(id.clone()));
-                            }
+                // Include, as premises, previous step from the actual subproof.
+                match previous_step {
+                    Some(step) => {
+                        match (*step).deref() {
+                            ProofNode::Step(StepNode { id, .. }) => {
+                                alethe_premises.push(EunoiaTerm::Id(id.clone()))
+                            },
 
                             _ => {
-                                // NOTE: it shouldn't be an index to something different
-                                // than a step.
+                                // It shouldn't be another kind of ProofNode
                                 panic!();
                             }
                         }
-                    });
+                    },
 
-                self.eunoia_proof.push(EunoiaCommand::Step {
+                    _ => {
+                        // There should be some previous step.
+                        panic!();
+                    }
+                }
+                
+                // self.local_steps[self.contexts_opened - 1]
+                //     .iter()
+                //     .for_each(|index| {
+                //         match &self.eunoia_proof[*index] {
+                //             EunoiaCommand::Step { id, .. } => {
+                //                 alethe_premises.push(EunoiaTerm::Id(id.clone()));
+                //             }
+
+                //             _ => {
+                //                 // NOTE: it shouldn't be an index to something different
+                //                 // than a step.
+                //                 panic!();
+                //             }
+                //         }
+                //     });
+
+                self.eunoia_proof.push(EunoiaCommand::StepPop {
                     id: id.to_owned(),
                     conclusion_clause: Some(conclusion),
                     rule: self.alethe_signature.let_rule.clone(),

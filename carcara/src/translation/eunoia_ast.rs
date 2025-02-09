@@ -123,19 +123,6 @@ pub enum EunoiaDefineAttr {
     Type(EunoiaType),
 }
 
-// /// Eunoia declare-consts
-// pub struct EunoiaDeclareConsts {
-//     pub lit_cat,
-//     pub type,
-// }
-
-// // TODO: "Alethe in Eunoia" does not use 'declare-type', only 'declare-sort'.
-// pub struct EunoiaDeclareSort {
-// }
-
-// TODO: see if we actually have this, rather than only "declare-const" and the
-// likes
-
 // TODO: using rug crate, as in Alethe ASTs
 #[derive(Debug, PartialEq)]
 pub enum EunoiaLitCategory {
@@ -199,6 +186,9 @@ pub enum EunoiaTerm {
     // actually an evaluation of some given function over
     // actual parameters.
     App(Symbol, Vec<EunoiaTerm>),
+
+    // Explicit higher-order function application ("_" symbol)
+    HOApp(Box<EunoiaTerm>, Vec<EunoiaTerm>),
 
     // Application of a built-in operator
     Op(EunoiaOperator, Vec<EunoiaTerm>),

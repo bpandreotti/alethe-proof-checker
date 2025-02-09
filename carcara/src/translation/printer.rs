@@ -326,6 +326,17 @@ impl<'a> EunoiaPrinter<'a> {
                 ret += ")";
             }
 
+            EunoiaTerm::HOApp(function, params) => {
+                ret = "( _ ".to_owned() + &EunoiaPrinter::term_to_concrete_syntax(function);
+
+                params.iter().for_each(|param| {
+                    ret += " ";
+                    ret += &EunoiaPrinter::term_to_concrete_syntax(param);
+                });
+
+                ret += ")";
+            }
+
             EunoiaTerm::Op(operator, params) => {
                 ret = "(".to_owned() + &EunoiaPrinter::operator_to_concrete_syntax(operator);
 

@@ -146,9 +146,8 @@ fn test_let_example() {
          (assume-push context ctx2)\n\
          (step t1 (@cl (= (@var ( ( x S ) ) x) b)) \
          :rule refl :args ( context (@var ( ( x S ) ) x) b ))\n\
-         (step t2 (@cl (= (@let ( ( x S ) ) (@var ( ( x S ) ) x)) b)) \
-         :rule let_elim :premises ( h1 t1 ) \
-         :args ( context (@let ( ( x S ) ) (@var ( ( x S ) ) x)) b ))\n\
+         (step-pop t2 (@cl (= ( _ (@let ( ( x (eo::typeof a) ) ) (@var ( ( x S ) ) x)) a) b)) \
+         :rule let_elim :premises ( h1 t1 ))\n\
          (step-pop t2 @empty_cl :rule discard_context)\n",
         std::str::from_utf8(&buf_proof).unwrap()
     );
