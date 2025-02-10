@@ -23,6 +23,9 @@ pub enum CheckerError {
     Resolution(#[from] crate::resolution::ResolutionError),
 
     #[error(transparent)]
+    DrupFormatError(#[from] crate::drup::DrupFormatError),
+
+    #[error(transparent)]
     Cong(#[from] CongruenceError),
 
     #[error(transparent)]

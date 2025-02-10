@@ -172,6 +172,8 @@ macro_rules! match_term {
     (@GET_VARIANT bbterm)   => { $crate::ast::Operator::BvBbTerm };
     (@GET_VARIANT bvult)    => { $crate::ast::Operator::BvULt };
     (@GET_VARIANT bvadd)    => { $crate::ast::Operator::BvAdd };
+    (@GET_VARIANT cl)    => { $crate::ast::Operator::Cl };
+    (@GET_VARIANT delete)    => { $crate::ast::Operator::Delete };
 
     (@GET_VARIANT extract)     => { $crate::ast::ParamOperator::BvExtract };
     (@GET_VARIANT bit_of)      => { $crate::ast::ParamOperator::BvBitOf };
@@ -233,6 +235,13 @@ macro_rules! build_term {
             op_args: vec![ $(build_term!($pool, $op_args)),+ ],
             args: vec![ $(build_term!($pool, $args)),+ ],
         };
+        $pool.add(term)
+    }};
+    ($pool:expr, ($op:tt [$arg:expr])) => {{
+        let term = $crate::ast::Term::Op(
+            match_term!(@GET_VARIANT $op),
+            $arg,
+        );
         $pool.add(term)
     }};
     ($pool:expr, ($op:tt $($args:tt)+)) => {{

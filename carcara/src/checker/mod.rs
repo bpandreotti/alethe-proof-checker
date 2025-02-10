@@ -482,6 +482,10 @@ impl<'c> ProofChecker<'c> {
             "re_unfold_neg" => strings::re_unfold_neg,
             "re_unfold_neg_concat_fixed_prefix" => strings::re_unfold_neg_concat_fixed_prefix,
             "re_unfold_neg_concat_fixed_suffix" => strings::re_unfold_neg_concat_fixed_suffix,
+            // Drup format rules
+            "drup" => |x| drup::drup(false, x),
+            // Drup format rules
+            "drat" => |x| drup::drup(true, x),
 
             // Special rules that always check as valid, and are used to indicate holes in the
             // proof.

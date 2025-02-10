@@ -435,6 +435,11 @@ impl<'a, R: BufRead> Parser<'a, R> {
                     }
                 }
             }
+            Operator::Cl => {}
+            Operator::Delete => {
+                SortError::assert_eq(&Sort::Bool, sorts[0])?;
+                assert_num_args(&args, 1)?;
+            }
             Operator::BvAdd
             | Operator::BvMul
             | Operator::BvAnd
@@ -1586,6 +1591,11 @@ impl<'a, R: BufRead> Parser<'a, R> {
                     Reserved::Lambda => self.parse_binder(Binder::Lambda),
                     Reserved::Bang => self.parse_annotated_term(),
                     Reserved::Let => self.parse_let_term(),
+                    Reserved::Cl => {
+                        let args = self.parse_sequence(Self::parse_term, false)?;
+                        self.make_op(Operator::Cl, args)
+                            .map_err(|err| Error::Parser(err, head_pos))
+                    }
                     _ => Err(Error::Parser(
                         ParserError::UnexpectedToken(Token::ReservedWord(reserved)),
                         head_pos,

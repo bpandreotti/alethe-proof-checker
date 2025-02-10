@@ -115,7 +115,9 @@ impl PrimitivePool {
                 | Operator::BvSGt
                 | Operator::BvSGe
                 | Operator::BvShl
-                | Operator::BvLShr => Sort::Bool,
+                | Operator::BvLShr
+                | Operator::Cl
+                | Operator::Delete => Sort::Bool,
                 Operator::BvAdd
                 | Operator::BvSub
                 | Operator::BvNot

@@ -886,5 +886,8 @@ fn nary_case(op: Operator) -> Option<NaryCase> {
         | Operator::BvSGe
         | Operator::BvBbTerm
         | Operator::RareList => None,
+
+        // Clausal
+        Operator::Cl | Operator::Delete => Some(NaryCase::LeftAssoc),
     }
 }
