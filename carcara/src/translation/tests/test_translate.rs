@@ -144,8 +144,8 @@ fn test_let_example() {
          (assume h1 (= a b))\n\
          (define ctx2 ( ) (@ctx ( ( x S ) ) (and (= x b) ctx1)))\n\
          (assume-push context ctx2)\n\
-         (step t1 (@cl (= (@var ( ( x S ) ) x) b)) \
-         :rule refl :args ( context (@var ( ( x S ) ) x) b ))\n\
+         (step-pop t1 (@cl (= (@var ( ( x S ) ) x) b)) \
+         :rule refl)\n\
          (step-pop t2 (@cl (= ( _ (@let ( ( x (eo::typeof a) ) ) (@var ( ( x S ) ) x)) a) b)) \
          :rule let_elim :premises ( h1 t1 ))\n\
          (step-pop t2 @empty_cl :rule discard_context)\n",
