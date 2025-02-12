@@ -284,7 +284,8 @@
 )
 
 ;TRUST
-(declare-rule sko_ex ()
+(declare-rule sko_ex ((ctx Bool))
+  :assumption ctx
   :requires (((check_sko_ex eo::conclusion) true))
   :conclusion-given
 )
@@ -322,19 +323,17 @@
 )
 
 ;TODO: why is type T not mentioned in the body of check_refl?
-(program check_refl ((ctx Bool) (T Type) (t1 T) (t2 T) (conclusion Bool))
-  (Bool T T Bool) Bool
+(program check_refl ((ctx Bool) (conclusion Bool))
+  (Bool Bool) Bool
   (
-   ((check_refl ctx t1 t2 conclusion) true)
+   ((check_refl ctx conclusion) true)
   )
 )
 
 ;TRUST
-(declare-rule refl ((ctx Bool) (T Type) (t1 T) (t2 T))
-  :args (ctx t1 t2)
-  ; TODO: I am forced to 
-  ;; :args ((@cl (= t1 t2)))
-  :requires (((check_refl ctx t1 t2 eo::conclusion) true))
+(declare-rule refl ((ctx Bool))
+  :args (ctx)
+  :requires (((check_refl ctx eo::conclusion) true))
   :conclusion-given
 )
 
@@ -595,13 +594,12 @@
 ;   with @cl.
 (program check_or ((premise Bool) (conclusion Bool))
   (Bool Bool) Bool
-  (((check_or (@cl premise) conclusion)    
-    ;; (convert_or_to_cl premise)
-    (cl_equal (convert_or_to_cl premise) 
+  (((check_or (@cl premise) conclusion)
+    (cl_equal (convert_or_to_cl premise)
                conclusion)
     )
 
-   ; { premise is not built with @cl } 
+   ; { premise is not built with @cl }
    ((check_or premise conclusion)
     (cl_equal (convert_or_to_cl premise) conclusion))
   )
@@ -1692,7 +1690,7 @@
 
 ;TRUST
 (declare-rule onepoint ((ctx Bool) (old_ctx Bool) (T Type) (l T) (r T) (l1 T) (r1 T))
-  ;; :assumption ctx
+  :assumption ctx
   ;; :premises (old_ctx (@cl (= l1 r1)))
   ;; :args ((@cl (= l r)))
   ;; :requires (((context_extended ctx old_ctx) true) ((check_onepoint ctx l r l1 r1) true))
@@ -1831,13 +1829,21 @@
   :conclusion (@cl (= l r))
 )
 
+;;;;;;;;;;;;;;;
+; Rule 91: let
+;;;;;;;;;;;;;;;
+
 ;TODO
 ; This has to traverse the lets and the premises.  Also has to check the
 ; context extension.
-(program check_let ((ctx Bool) (Cs Bool) (l Bool) (r Bool) (conclusion Bool))
-  (Bool Bool Bool Bool Bool) Bool
+(program check_let_elim ((ctx Bool) (Cs Bool :list) (conclusion Bool))
+  (Bool Bool Bool) Bool
   (
-   ((check_let ctx Cs l r (@cl (= l r))) true)
+   ((check_let_elim ctx Cs
+               ;; (@cl (= (@let ((x_1 v_1) pairs_tail) let_body) let_body'))
+               conclusion
+               ) 
+    true)
   )
 )
 
@@ -1849,10 +1855,10 @@
 ; conclusion: >
 ;   
 ; note: >
-(declare-rule let_elim ((ctx Bool) (Cs Bool) (l Bool) (r Bool))
+(declare-rule let_elim ((ctx Bool) (Cs Bool) (conclusion Bool))
+  :assumption ctx
   :premise-list Cs and
-  :args (ctx l r)
-  :requires (((check_let ctx Cs l r eo::conclusion) true))
+  :requires (((check_let_elim ctx Cs eo::conclusion) true))
   :conclusion-given
 )
 
