@@ -670,7 +670,7 @@ fn translate_command(options: TranslateCommandOptions) -> CliResult<()> {
 
     let node = ast::ProofNode::from_commands(alethe_proof.commands);
     let mut translator = carcara::translation::eunoia::EunoiaTranslator::new();
-    let eunoia_prelude = translator.translate_problem_prelude(&alethe_problem);
+    let eunoia_prelude = translator.translate_problem(&alethe_problem);
     let eunoia_proof = translator.translate(&node);
 
     let mut buf_proof = Vec::new();

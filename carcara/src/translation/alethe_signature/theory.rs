@@ -41,6 +41,8 @@ pub struct AletheTheory {
     pub forall_inst: Symbol,
     pub la_generic: Symbol,
     pub discard_context: Symbol,
+    pub onepoint: Symbol,
+    pub sko_ex: Symbol,
 
     // Context representation and manipulation.
     // To bind variables in a context.
@@ -91,6 +93,8 @@ impl AletheTheory {
             bind: String::from("bind"),
             la_generic: String::from("la_generic"),
             discard_context: String::from("discard_context"),
+            onepoint: String::from("onepoint"),
+            sko_ex: String::from("sko_ex"),
 
             // Context representation and manipulation.
             var: String::from("@var"),

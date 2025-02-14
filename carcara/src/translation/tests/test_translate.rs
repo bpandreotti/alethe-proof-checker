@@ -24,15 +24,15 @@ const TEST_CONFIG: Config = Config {
 fn test_small_example() {
     let mut eunoia_translator = EunoiaTranslator::new();
 
-    let mut buf_prelude = Vec::new();
-    let s_exp_formatter_prelude = SExpFormatter::new(&mut buf_prelude);
-    let mut printer_prelude = EunoiaPrinter::new(s_exp_formatter_prelude);
+    let mut buf_problem = Vec::new();
+    let s_exp_formatter_problem = SExpFormatter::new(&mut buf_problem);
+    let mut printer_problem = EunoiaPrinter::new(s_exp_formatter_problem);
 
     let mut buf_proof = Vec::new();
     let s_exp_formatter_proof = SExpFormatter::new(&mut buf_proof);
     let mut printer_proof = EunoiaPrinter::new(s_exp_formatter_proof);
 
-    let problem_prelude = "(declare-const a Real)
+    let problem = "(declare-const a Real)
                    (declare-const b Real)
                    (assert (xor (not (> a 5.0)) (= b 10.0)))
                    (assert (not (= b 10.0)))
@@ -54,21 +54,21 @@ fn test_small_example() {
     // (step t2 :rule la_generic :args ((@cl (<= a 5.0) (> a 5.0)) (+ 1.0 1.0)))
     // note the list of arguments: why the '+'?
     // TODO: ugly, copying this from parser/tests.rs
-    let (prelude_ast, proof_ast, _pool) = parse_instance(
-        problem_prelude.as_bytes(),
+    let (problem_ast, proof_ast, _pool) = parse_instance(
+        problem.as_bytes(),
         alethe_certificate.as_bytes(),
         TEST_CONFIG,
     )
     .expect(ERROR_MESSAGE);
 
-    let eunoia_prelude = eunoia_translator.translate_problem_prelude(&prelude_ast);
+    let eunoia_problem = eunoia_translator.translate_problem(&problem_ast);
 
-    printer_prelude.write_proof(&eunoia_prelude).unwrap();
+    printer_problem.write_proof(&eunoia_problem).unwrap();
 
     assert_eq!(
         "(declare-const a Real)\n\
          (declare-const b Real)\n",
-        std::str::from_utf8(&buf_prelude).unwrap()
+        std::str::from_utf8(&buf_problem).unwrap()
     );
 
     let commands = ProofNode::from_commands(proof_ast.commands);
@@ -96,15 +96,15 @@ fn test_small_example() {
 fn test_let_example() {
     let mut eunoia_translator = EunoiaTranslator::new();
 
-    let mut buf_prelude = Vec::new();
-    let s_exp_formatter_prelude = SExpFormatter::new(&mut buf_prelude);
-    let mut printer_prelude = EunoiaPrinter::new(s_exp_formatter_prelude);
+    let mut buf_problem = Vec::new();
+    let s_exp_formatter_problem = SExpFormatter::new(&mut buf_problem);
+    let mut printer_problem = EunoiaPrinter::new(s_exp_formatter_problem);
 
     let mut buf_proof = Vec::new();
     let s_exp_formatter_proof = SExpFormatter::new(&mut buf_proof);
     let mut printer_proof = EunoiaPrinter::new(s_exp_formatter_proof);
 
-    let problem_prelude = "(set-logic UF)
+    let problem = "(set-logic UF)
                            (declare-sort S 0)
                            (declare-const a S)
                            (declare-const b S)
@@ -115,22 +115,22 @@ fn test_let_example() {
                               (step t1 (cl (= x b)) :rule refl)
                               (step t2 (cl (= (let ((x a)) x) b)) :rule let :premises (h1))";
 
-    let (prelude_ast, proof_ast, _pool) = parse_instance(
-        problem_prelude.as_bytes(),
+    let (problem_ast, proof_ast, _pool) = parse_instance(
+        problem.as_bytes(),
         alethe_certificate.as_bytes(),
         TEST_CONFIG,
     )
     .expect(ERROR_MESSAGE);
 
-    let eunoia_prelude = eunoia_translator.translate_problem_prelude(&prelude_ast);
+    let eunoia_problem = eunoia_translator.translate_problem(&problem_ast);
 
-    printer_prelude.write_proof(&eunoia_prelude).unwrap();
+    printer_problem.write_proof(&eunoia_problem).unwrap();
 
     assert_eq!(
         "(declare-type S ( ))\n\
          (declare-const a S)\n\
          (declare-const b S)\n",
-        std::str::from_utf8(&buf_prelude).unwrap()
+        std::str::from_utf8(&buf_problem).unwrap()
     );
 
     let commands = ProofNode::from_commands(proof_ast.commands);
@@ -144,11 +144,10 @@ fn test_let_example() {
          (assume h1 (= a b))\n\
          (define ctx2 ( ) (@ctx ( ( x S ) ) (and (= x b) ctx1)))\n\
          (assume-push context ctx2)\n\
-         (step-pop t1 (@cl (= (@var ( ( x S ) ) x) b)) \
-         :rule refl)\n\
+         (step t1 (@cl (= (@var ( ( x S ) ) x) b)) \
+         :rule refl :args ( context ))\n\
          (step-pop t2 (@cl (= ( _ (@let ( ( x (eo::typeof a) ) ) (@var ( ( x S ) ) x)) a) b)) \
-         :rule let_elim :premises ( h1 t1 ))\n\
-         (step-pop t2 @empty_cl :rule discard_context)\n",
+         :rule let_elim :premises ( h1 t1 ))\n",
         std::str::from_utf8(&buf_proof).unwrap()
     );
 }
