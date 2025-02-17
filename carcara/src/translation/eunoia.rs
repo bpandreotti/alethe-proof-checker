@@ -365,12 +365,16 @@ impl EunoiaTranslator {
 
                                 match self.variables_in_scope.get_with_depth(name) {
                                     Some((depth, _)) => {
-                                        if depth < self.variables_in_scope.height() {
+                                        if depth < self.variables_in_scope.height() - 1 {
                                             // This variable is bound somewhere else
                                             ctx_typed_params.push(EunoiaTerm::List(vec![
                                                 EunoiaTerm::Id(name.clone()),
                                                 eunoia_sort.clone(),
                                             ]));
+
+                                            
+                                            self.variables_in_scope
+                                                .insert(name.clone(), eunoia_sort.clone());
                                         }
                                     }
 
@@ -381,11 +385,14 @@ impl EunoiaTranslator {
                                             EunoiaTerm::Id(name.clone()),
                                             eunoia_sort.clone(),
                                         ]));
+                                        
+                                        self.variables_in_scope
+                                            .insert(name.clone(), eunoia_sort.clone());
                                     }
                                 }
 
-                                self.variables_in_scope
-                                    .insert(name.clone(), eunoia_sort.clone());
+                                // self.variables_in_scope
+                                //     .insert(name.clone(), eunoia_sort.clone());
                                 and_params.push(EunoiaTerm::App(
                                     self.alethe_signature.eq.clone(),
                                     vec![EunoiaTerm::Id(name.clone()), rhs],
@@ -643,7 +650,7 @@ impl EunoiaTranslator {
 
     /// Translates a `BindingList` as required by our definition of @let: it builds a list
     /// of pairs (variable, type) for the binding occurrences, and returns this coupled with
-    /// the original list of actual values.
+    /// the original list of actual values, as a @VarList.
     fn translate_let_binding_list(
         &self,
         binding_list: &BindingList,
@@ -928,21 +935,21 @@ impl EunoiaTranslator {
                             }
                         }
 
-                        // self.local_steps[self.contexts_opened - 1]
-                        //     .iter()
-                        //     .for_each(|index| {
-                        //         match &self.eunoia_proof[*index] {
-                        //             EunoiaCommand::Step { id, .. } => {
-                        //                 alethe_premises.push(EunoiaTerm::Id(id.clone()));
-                        //             }
+                        self.local_steps[self.contexts_opened - 1]
+                            .iter()
+                            .for_each(|index| {
+                                match &self.eunoia_proof[*index] {
+                                    EunoiaCommand::Step { id, .. } => {
+                                        alethe_premises.push(EunoiaTerm::Id(id.clone()));
+                                    }
 
-                        //             _ => {
-                        //                 // NOTE: it shouldn't be an index to something different
-                        //                 // than a step.
-                        //                 panic!();
-                        //             }
-                        //         }
-                        //     });
+                                    _ => {
+                                        // NOTE: it shouldn't be an index to something different
+                                        // than a step.
+                                        panic!();
+                                    }
+                                }
+                            });
 
                         self.eunoia_proof.push(EunoiaCommand::StepPop {
                             id: id.clone(),

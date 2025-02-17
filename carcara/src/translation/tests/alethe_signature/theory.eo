@@ -131,22 +131,29 @@
 
 ; program: get_lambda_type
 ; args:
-; - (x @VarList) : TODO: seems that it shouldn't be a parameter
-; - (xs @VarList :list) 
-; - (B Type)
-; return: the expected function type, with domain in xs and return type B.
+; - (list @VarList) : 
+; - (B Type) : Return type of the function type.
+; return: >
+;   The expected function type, with domain in the product type of 
+;   and return type B.
 (program get_lambda_type ((x @VarList) (xs @VarList :list) (B Type))
   (@VarList Type) Type
   (
-    ((get_lambda_type (@varlist x xs) B) (-> (eo::typeof x) (get_lambda_type xs B)))
-    ((get_lambda_type @varlist.nil B)    B)
+    ((get_lambda_type (@varlist x xs) B) 
+     
+     (-> (eo::typeof x) (get_lambda_type xs B)))
+
+    ((get_lambda_type @varlist.nil B)
+
+     B)
   )
 )
 
 (declare-const @let (-> (! Type :var B :implicit)
-                        (! @VarList :var L)
-                        B
-                        (get_lambda_type L B)) :binder @varlist)
+                       (! @VarList :var L)
+                       B
+                       (get_lambda_type L B)
+                       ) :binder @varlist)
 
 
 ; ------------
@@ -163,11 +170,11 @@
 ;           B
 ;           B)
 ; note: >
-; Used to bind variables in a context
+;    Used to bind variables in a context.
 (declare-const @var (-> (! Type :var B :implicit)
-                        (! @VarList :var L)
-                        B
-                        B) :binder @varlist)
+                       (! @VarList :var L)
+                       B
+                       B) :binder @varlist)
 
 ; Checks that the context ctx is an extension of old_ctx.
 ;TODO

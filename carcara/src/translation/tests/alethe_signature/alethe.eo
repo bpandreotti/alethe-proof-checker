@@ -1833,18 +1833,63 @@
 ; Rule 91: let
 ;;;;;;;;;;;;;;;
 
-;TODO
-; This has to traverse the lets and the premises.  Also has to check the
-; context extension.
-(program check_let_elim ((ctx Bool) (Cs Bool :list) (conclusion Bool))
-  (Bool Bool Bool) Bool
+(program verify_let_premises ((context Bool) (premises Bool) 
+                              (A Type) (var A)
+                              (B Type) (value B)
+                              (tl @VarList :list))
+  (Bool Bool @VarList) Bool
   (
-   ((check_let_elim ctx Cs
-               ;; (@cl (= (@let ((x_1 v_1) pairs_tail) let_body) let_body'))
-               conclusion
-               ) 
-    true)
-  )
+   (
+    (verify_let_premises context premises 
+                         (f_list_cons @varlist 
+                                      (f_list_cons @varlist var value) 
+                                      tl))
+    (eo::or (f_list_contains_elem 
+             and 
+             (@cl (= value (context_get_substitute context var)))
+             premises)
+            (verify_let_premises context premises tl)
+            )
+    )
+
+   (
+    (verify_let_premises context premises @varlist.nil)
+    
+    true
+    )
+   )
+)
+
+; This has to traverse the lets and the premises. Also has to check the
+; context extension.
+; program: check_let_elim
+; args:
+; - ctx Bool:
+; - Cs Bool:
+; - conclusion Bool:
+; return:
+(program check_let_elim ((context Bool) (premises Bool) 
+                         (let_type Type) (let_def let_type)
+                         (var_defs @VarList) 
+                         (A Type) (lhs A) (rhs A)
+                         (B Type)
+                         (var_values B))
+  (Bool Bool let_type) Bool
+  (
+   (
+    (check_let_elim context premises
+                    (@cl (= let_def rhs)))
+
+    (eo::and 
+     ; There should be a conclusion of the form (@cl (= lhs rhs))
+     ; TODO: this conclusion must be just of the previous step
+     (f_list_contains_elem and (@cl (= (let_get_body let_def) rhs)) premises)
+     (verify_let_premises context premises 
+                          (let_get_vars_substitutes (let_get_vars let_def)
+                                                    (let_get_values let_def)))
+     )
+    )
+   )
 )
 
 ; rule: let_elim
@@ -1855,10 +1900,10 @@
 ; conclusion: >
 ;   
 ; note: >
-(declare-rule let_elim ((ctx Bool) (Cs Bool) (conclusion Bool))
+(declare-rule let_elim ((ctx Bool) (premises Bool))
   :assumption ctx
-  :premise-list Cs and
-  :requires (((check_let_elim ctx Cs eo::conclusion) true))
+  :premise-list premises and
+  :requires (((check_let_elim ctx premises eo::conclusion) true))
   :conclusion-given
 )
 

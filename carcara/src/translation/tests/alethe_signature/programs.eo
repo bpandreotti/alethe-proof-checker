@@ -1,6 +1,7 @@
 (include "./theory.eo")
 
-;; Library of auxiliary programs, useful to manipulate propositions.
+; Library of auxiliary programs, useful to manipulate propositions and
+; other constructions of the language
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; f-lists computations
@@ -112,24 +113,79 @@
 ; return: >
 ; Returns an f-list, with first operand "elem", followed by operands of flist_2.
 (define f_list_cons ((A Type :implicit) (f (-> A A A)) (elem A)
-                   (tail A :list))
+                     (tail A :list))
     (f elem tail)
 )
 
-;; (program f_list_cons ((A Type :implicit) (f (-> A A A))
-;;                       (elem A)
-;;                       (hd_2 A) (tl_2 A :list))
-;;   ((-> A A A) A A) A
-;;   (
-;;    ((f_list_cons f elem (f hd_2 tl_2))
+; TODO: abstract this into a map,
+;       once it becomes possible to pass and reduce programs
+; program: f_list_proj_lhs
+; args:
+; - f_list_proj_lhs nil:
+; return:
+(program f_list_proj_lhs ((A Type) (B Type) 
+                          (f (-> A A B)) (op (-> A A A)) (lhs A) (tl A :list))
+   (B) B
+   (
+    (
+     (f_list_proj_lhs (f (op lhs _) tl))
+     
+     (f lhs (f_list_proj_lhs tl))
+     )
+    )
+)
 
-;;     (f elem (f hd_2 tl_2)))
-   
-;;    ((f_list_cons f elem hd_2)
+;;;;;;;;;;;;
+;; @VarList
+;;;;;;;;;;;;
 
-;;     (f elem hd_2))
-;;   )
-;; )
+; program: varlist_concat
+; args:
+; - varlist_concat nil:
+; return:
+(program varlist_concat ((A Type) (hd A) (tl @VarList :list)
+                         (varlist_2 @VarList))
+  (@VarList @VarList) @VarList
+
+  (
+   (
+    (varlist_concat (@varlist hd tl) varlist_2)
+    
+    (f_list_cons @varlist 
+                 hd
+                 (varlist_concat tl varlist_2))
+    )
+
+   (
+    (varlist_concat @varlist.nil varlist_2)
+    
+    varlist_2
+    )
+   )
+)
+
+; program: varlist_reverse
+; args:
+; - A Type:
+; - hd A:
+; - tl @VarList:
+; return:
+(program varlist_reverse ((A Type) (hd A) (tl @VarList :list))
+  (@VarList) @VarList
+  (
+   (
+    (varlist_reverse (@varlist hd tl))
+
+    (varlist_concat (varlist_reverse tl) 
+                    (f_list_cons @varlist hd @varlist.nil))
+    )
+   (
+    (varlist_reverse @varlist.nil)
+
+    @varlist.nil
+    )
+  )
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CLAUSES
@@ -317,5 +373,185 @@
           
           (not phi_1))
 
+          )
+)
+
+
+;;;;;;;;;;;;;
+;; contexts
+;;;;;;;;;;;;;
+
+; TODO: implement a generalization of this
+; program: get_value
+; args:
+; - get_value nil:
+; return:
+(program get_value ((A Type) (id A) (B Type)
+                    (value B) (hd Bool) (tl Bool :list))
+         (Bool A) B
+         (
+          ((get_value (and (= id value) tl) id)
+           
+           value)
+
+          ; { hd =/= (= id value), for some value "value"} 
+          ((get_value (and hd tl) id)
+           
+           (get_value tl id))
+
+          ((get_value (= id value) id)
+           
+           value)
+          )
+)
+
+; program: context_get_substitute
+; args:
+; - context_get_substitute nil:
+; return:
+(program context_get_substitute ((A Type) (id A) (B Type)
+                                 (value B) (varlist @VarList) 
+                                 (ctx Bool) (and_list Bool))
+         (Bool A) B
+         (
+          ((context_get_substitute (@ctx varlist and_list) id)
+           
+           (get_value and_list id))
+          )
+)
+
+; program: context_get_var_subst_pairs
+; args:
+; - context_get_var_subst_pairs nil:
+; return:
+(program context_get_var_subst_pairs ((A Type) (id A) (B Type)
+                                      (value B) (varlist @VarList) 
+                                      (context Bool) (and_list Bool)
+                                      (ids @VarList :list))
+         (Bool @VarList) @VarList
+         (
+          (
+           (context_get_var_subst_pairs context (@varlist id ids))
+           
+           (f_list_cons @varlist 
+                        (f_list_cons @varlist id (context_get_substitute context id))
+                        (context_get_var_subst_pairs context ids))
+           )
+          (
+           (context_get_var_subst_pairs context @varlist.nil)
+           
+           @varlist.nil
+           )
+          )
+)
+
+; TODO: once programs can be passed and used, abstract the logic of these
+;       functions into a single program
+; program: let_get_vars
+; args:
+; - let_get_vars nil:
+; return:
+(program let_get_vars ((let_type Type) (var_defs @VarList)
+                       (body_type Type) (body body_type)
+                       (A Type) (var_values A)
+                       (B Type) (nested_func_app B))
+
+         (let_type) @VarList
+         (
+          (
+           (let_get_vars (_ (@let var_defs body) var_values))
+
+           var_defs
+           )
+
+          (; { nested_func_app =/= (@let ...) }
+           (let_get_vars (_ nested_func_app var_values))
+
+           (let_get_vars nested_func_app)
+           )
+          )
+         )
+
+; program: let_get_values
+; args:
+; - let_get_vars nil:
+; return:
+(program let_get_values ((let_type Type) (varlist @VarList)
+                         (body_type Type) (body body_type)
+                         (B Type) (nested_func_app B)
+                         (A Type) (value A))
+
+         (let_type) @VarList
+         (
+          (
+           (let_get_values (_ (@let varlist body) value))
+
+           (f_list_cons @varlist value @varlist.nil)
+           )
+
+          (
+           ; { nested_func_app =/= (@let ...) }
+           (let_get_values (_ nested_func_app value))
+
+           (varlist_reverse (f_list_cons @varlist 
+                                         value 
+                                         (let_get_values nested_func_app)))
+           )
+          
+          )
+         )
+
+; program: let_get_body
+; args:
+; - let_get_body nil:
+; return:
+(program let_get_body ((let_type Type) (varlist @VarList)
+                         (body_type Type) (body body_type)
+                         (B Type) (nested_func_app B)
+                         (A Type) (value A))
+
+         (let_type) body_type
+         (
+          (
+           (let_get_body (_ (@let varlist body) value))
+
+           body
+           )
+
+          (
+           ; { nested_func_app =/= (@let ...) }
+           (let_get_body (_ nested_func_app value))
+
+           (let_get_body nested_func_app)
+           )
+          
+          )
+         )
+
+; program: let_get_vars_substitutes
+; args:
+; - let_get_vars_substitutes nil:
+; return:
+(program let_get_vars_substitutes ((B Type) (x B)
+                                   (vardefs @VarList :list)
+                                   (U Type) (value_x U) 
+                                   (parameters @VarList :list))
+
+         (@VarList @VarList) @VarList
+         (
+          (
+           (let_get_vars_substitutes (@varlist x vardefs)
+                                     (@varlist value_x parameters))
+
+           (f_list_cons @varlist 
+                        (f_list_cons @varlist x value_x)
+                        (let_get_vars_substitutes vardefs parameters))
+           )
+
+          (
+           (let_get_vars_substitutes @varlist.nil @varlist.nil)
+
+           @varlist.nil
+           )
           )
 )

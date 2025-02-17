@@ -55,6 +55,7 @@ pub struct AletheTheory {
     pub choice_binder: Symbol,
 
     // VarList constructors
+    pub varlist_cons: Symbol,
     pub varlist_nil: Symbol,
 }
 
@@ -106,6 +107,7 @@ impl AletheTheory {
             choice_binder: String::from("choice"),
 
             // VarList constructors
+            varlist_cons: String::from("@varlist"),
             varlist_nil: String::from("@varlist.nil"),
         }
     }
