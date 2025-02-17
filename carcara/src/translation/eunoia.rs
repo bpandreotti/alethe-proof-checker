@@ -372,7 +372,6 @@ impl EunoiaTranslator {
                                                 eunoia_sort.clone(),
                                             ]));
 
-                                            
                                             self.variables_in_scope
                                                 .insert(name.clone(), eunoia_sort.clone());
                                         }
@@ -385,7 +384,7 @@ impl EunoiaTranslator {
                                             EunoiaTerm::Id(name.clone()),
                                             eunoia_sort.clone(),
                                         ]));
-                                        
+
                                         self.variables_in_scope
                                             .insert(name.clone(), eunoia_sort.clone());
                                     }
@@ -650,7 +649,7 @@ impl EunoiaTranslator {
 
     /// Translates a `BindingList` as required by our definition of @let: it builds a list
     /// of pairs (variable, type) for the binding occurrences, and returns this coupled with
-    /// the original list of actual values, as a @VarList.
+    /// the original list of actual values, as a `@VarList`.
     fn translate_let_binding_list(
         &self,
         binding_list: &BindingList,
@@ -849,7 +848,7 @@ impl EunoiaTranslator {
                 premises,
                 args,
                 discharge,
-                previous_step,
+                ..
             }) => {
                 // Add premises actually present in the original step command.
                 alethe_premises.extend(
@@ -915,25 +914,25 @@ impl EunoiaTranslator {
                         // eunoia_arguments.push(rhs);
 
                         // Include, as premises, previous step from the actual subproof.
-                        match previous_step {
-                            Some(step) => {
-                                match step.deref() {
-                                    ProofNode::Step(StepNode { id, .. }) => {
-                                        alethe_premises.push(EunoiaTerm::Id(id.clone()));
-                                    }
+                        // match previous_step {
+                        //     Some(step) => {
+                        //         match step.deref() {
+                        //             ProofNode::Step(StepNode { id, .. }) => {
+                        //                 alethe_premises.push(EunoiaTerm::Id(id.clone()));
+                        //             }
 
-                                    _ => {
-                                        // It shouldn't be another kind of ProofNode
-                                        panic!();
-                                    }
-                                }
-                            }
+                        //             _ => {
+                        //                 // It shouldn't be another kind of ProofNode
+                        //                 panic!();
+                        //             }
+                        //         }
+                        //     }
 
-                            _ => {
-                                // There should be some previous step.
-                                panic!();
-                            }
-                        }
+                        //     _ => {
+                        //         // There should be some previous step.
+                        //         panic!();
+                        //     }
+                        // }
 
                         self.local_steps[self.contexts_opened - 1]
                             .iter()
